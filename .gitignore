@@ -1,0 +1,17 @@
+chromosome.rb
+chromosome_spec.rb
+mutation.rb
+mutation_spec.rb
+cross_over.rb
+cross_over_spec.rb
+population_and_fitness.rb
+population_and_fitness_spec.rb
+
+
+
+complementary_dna.rb
+complementary_dna_spec.rb
+dna_to_rna.rb
+dna_to_rna_spec.rb
+
+*.md
