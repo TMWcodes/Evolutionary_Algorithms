@@ -1,7 +1,7 @@
 # chromosome.rb
 # chromosome_spec.rb
-mutation.rb
-mutation_spec.rb
+# mutation.rb
+# mutation_spec.rb
 cross_over.rb
 cross_over_spec.rb
 population_and_fitness.rb
