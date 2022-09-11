@@ -1,5 +1,5 @@
-chromosome.rb
-chromosome_spec.rb
+# chromosome.rb
+# chromosome_spec.rb
 mutation.rb
 mutation_spec.rb
 cross_over.rb
