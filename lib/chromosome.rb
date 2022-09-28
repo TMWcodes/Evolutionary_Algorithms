@@ -9,4 +9,5 @@ def generate(length)
 end
   # generated_numbers = 4.times.map{Random.rand(8) } #=> [4, 2, 6, 8]
 
+  
  
