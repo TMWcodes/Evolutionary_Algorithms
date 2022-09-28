@@ -3,20 +3,24 @@ def get_counted_nucleotides(dna)
  
  nucleobases = "ATGC"
  dna.upcase
-
+# adds Nucleobases to hash with value of 0
  nucleobases.each_char do |char| 
     counted[char] = 0
  end
 
-
-
+ #counter
  dna.each_char do |base|
-    case base
-    when "T"
-     counted['T'] += 1   
-    end
-    
- end
+      case base
+      when "A"
+      counted['A'] += 1   
+      when "T"
+         counted['T'] += 1   
+      when "G"
+         counted['G'] += 1   
+      when "C"
+         counted['C'] += 1   
+      end
+   end
     
  counted
  
