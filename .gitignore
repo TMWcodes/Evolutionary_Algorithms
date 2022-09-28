@@ -9,8 +9,8 @@ population_and_fitness_spec.rb
 
 
 
-complementary_dna.rb
-complementary_dna_spec.rb
+# complementary_dna.rb
+# complementary_dna_spec.rb
 # dna_to_rna.rb
 # dna_to_rna_spec.rb
 
