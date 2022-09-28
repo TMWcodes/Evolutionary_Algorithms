@@ -15,3 +15,6 @@ dna_to_rna.rb
 dna_to_rna_spec.rb
 
 *.md
+
+binary_genetic_algorithms.rb
+binary_genetic_algorithms_spec.rb
