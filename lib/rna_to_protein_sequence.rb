@@ -16,7 +16,7 @@ def protein(rna)
     codon = rna[prime5...prime3] 
     codon #UUC
     aminoacid = $aminoacid_dictionary[codon]
-    aminoacids << aminoacid
+    aminoacids << aminoacid unless aminoacid == 'Stop'
     prime5 = prime5 + codon_size
     prime3 = prime5 + codon_size
     # index = index + index

@@ -5,20 +5,26 @@ describe 'rna to protien' do
         it 'returns an amino acid' do
             expect(protein('AUG')).to eq('M')
         end
-        it 'can return stop' do
-            expect(protein('UGA')).to eq('Stop')
-        end
+        # it 'can return stop' do
+        #     expect(protein('UGA')).to eq('Stop')
+        # end
     end
     context 'when given multiple codons' do
         it 'returns multiple aminoacids' do
             expect(protein('UUCGAC')).to eq('FD')
         end
+        it 'can return long aminoacid chains' do
+            expect(protein('AUGUCCUUCCAUCAAGGAAACCAUGCGCGUUCAGCUUUCUGA')).to eq('MSFHQGNHARSAF')
+            expect(protein('AUGCUAUGGAGGGUAGUGUUAACUACCACGCCCAGUACUUGA')).to eq('MLWRVVLTTTPST')
+        end
+        it 'can read unique aminoacid chains' do
+            expect(protein('UGCGAUGAAUGGGCUCGCUCC')).to eq('CDEWARS')
+        end
         it 'ignores stop' do
             expect(protein('AUGGUUAGUUGA')).to eq('MVS')
+            expect(protein('AUGUGA')).to eq('M')
         end
-        it '' do
-            expect(protein('AUGUCCUUCCAUCAAGGAAACCAUGCGCGUUCAGCUUUCUGA')).to eq('MSFHQGNHARSAF')
-        end
+        
 
     end 
 end
