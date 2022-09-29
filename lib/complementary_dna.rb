@@ -1,4 +1,5 @@
 def DNA_strand(dna)
+    dna = dna.upcase
     for i in 0..(dna.size - 1)
         case dna[i]
         when "A"
