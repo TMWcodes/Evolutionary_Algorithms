@@ -16,6 +16,9 @@ describe 'dna_sequence_tester' do
         it 'returns true' do
             expect(check_DNA('GCTAGCACCCATTAGGAGATAC','CTCCTAATGGGTG')).to eq(true)
             end
+        it 'return' do
+            expect(check_DNA('GCGCTGCTAGCTGATCGA','ACGTACGATCGATCAGCTAGCAGCGCTAC')).to eq(true)
+            end
         end
     context 'when given non-matching sequences of difference length' do
         it 'returns false' do
