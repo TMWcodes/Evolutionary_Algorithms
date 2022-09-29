@@ -20,9 +20,13 @@ describe 'rna to protien' do
         it 'can read unique aminoacid chains' do
             expect(protein('UGCGAUGAAUGGGCUCGCUCC')).to eq('CDEWARS')
         end
-        it 'ignores stop' do
+        it 'does not display Stop' do
             expect(protein('AUGGUUAGUUGA')).to eq('MVS')
             expect(protein('AUGUGA')).to eq('M')
+        end
+        it 'Stops on Stop' do
+            expect(protein('GCUUACAGGGGCUGUGACGAAUUCUGCGGCUAAAUUUCGGACCUUUUAGCA')).to eq("AYRGCDEFCG")
+            
         end
         
 

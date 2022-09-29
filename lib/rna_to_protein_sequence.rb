@@ -5,7 +5,6 @@ $aminoacid_dictionary = {'UUC'=>'F', 'UUU'=>'F','UUA'=>'L', 'UUG'=>'L', 'CUU'=>'
 
 
 def protein(rna)
-    # assuming start is 0
     rna = rna.upcase
     prime5 = 0
     codon_size = 3
@@ -14,13 +13,13 @@ def protein(rna)
    
     while prime5 < rna.length
     codon = rna[prime5...prime3] 
-    codon #UUC
     aminoacid = $aminoacid_dictionary[codon]
-    aminoacids << aminoacid unless aminoacid == 'Stop'
+    if aminoacid == 'Stop'
+        break
+    end
+    aminoacids << aminoacid
     prime5 = prime5 + codon_size
     prime3 = prime5 + codon_size
-    # index = index + index
-
     end
     
     aminoacids.join("")
@@ -28,4 +27,4 @@ def protein(rna)
      
 end
 
-# protein('AUGGUUAGUUGA')
+p protein('GCUUACAGGGGCUGUGACGAAUUCUGCGGCUAAAUUUCGGACCUUUUAGCA')
