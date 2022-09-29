@@ -5,9 +5,8 @@ DNA_strand('')
 def check_DNA(seq1, seq2)
     
     strand2 = seq2.reverse
-    strand2_check = DNA_strand(seq1)
-    strand2.eql? strand2_check
-   
+    strand2_check = seq1.tr("ACTG", "TGAC")
+    strand2_check.include? strand2
 end
 
-check_DNA('ATGCTACG','CGTAGCAT')
+p check_DNA('ATGCTACG','CGTAGCAT')
