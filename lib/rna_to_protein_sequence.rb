@@ -27,4 +27,4 @@ def protein(rna)
      
 end
 
-p protein('GCUUACAGGGGCUGUGACGAAUUCUGCGGCUAAAUUUCGGACCUUUUAGCA')
+protein('')

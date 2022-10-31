@@ -25,8 +25,7 @@ describe 'rna to protien' do
             expect(protein('AUGUGA')).to eq('M')
         end
         it 'Stops on Stop' do
-            expect(protein('GCUUACAGGGGCUGUGACGAAUUCUGCGGCUAAAUUUCGGACCUUUUAGCA')).to eq("AYRGCDEFCG")
-            
+            expect(protein('GCUUACAGGGGCUGUGACGAAUUCUGCGGCUAAAUUUCGGACCUUUUAGCA')).to eq("AYRGCDEFCG") 
         end
         
 
