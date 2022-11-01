@@ -5,7 +5,7 @@ def mutate (chromosome = "1010010110", p = 0)
     fail "invalid nucleotide"
     end
 
-p chromosome = chromosome.dup
+chromosome = chromosome.dup
    for i in 0..(chromosome.size - 1)
         # error catch
         if rand < p
@@ -16,7 +16,7 @@ p chromosome = chromosome.dup
     chromosome
 end
 
-mutate("00000", 1 )
+# mutate("00000", 1 )
 
 # "11010"
 # "10010"

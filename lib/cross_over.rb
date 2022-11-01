@@ -7,4 +7,3 @@ chr2 = chromosome2[0...index] + chromosome1[index..-1]
 
 end
 
-crossover("111000", "000111", 3)

@@ -18,3 +18,5 @@
 
 binary_genetic_algorithms.rb
 binary_genetic_algorithms_spec.rb
+roulette_wheel_selection.rb
+roulette_wheel_selection_spec.rb
