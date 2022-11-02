@@ -9,3 +9,17 @@ describe 'binary_strand' do
         end
     end
 end
+
+describe 'dna_sequence_tester' do
+    context 'when given matching sequence of same length' do
+        it 'returns true' do
+            expect(check_binary('101010','101010')).to eq(true)
+        end
+    end
+
+    context 'when given non matching sequence of same length' do
+        it 'returns false' do
+            expect(check_binary('101010','010101')).to eq(false)
+        end
+    end
+end
