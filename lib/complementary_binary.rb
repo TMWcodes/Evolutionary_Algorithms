@@ -1,4 +1,6 @@
+
 def binary_double(chromosome)
+    chromosome = chromosome.dup
     for i in 0..(chromosome.size-1)
         case chromosome[i]
         when "1"
