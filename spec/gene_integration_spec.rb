@@ -7,7 +7,7 @@ require 'rna_to_protein_sequence'
 describe 'transcription' do
     context 'after creating a dna strand' do
         it 'checks if generated strand matches' do
-            seq1 = generate(6)
+            seq1 = generate_strand(6)
             seq2 = DNA_strand(seq1).reverse
             expect(check_DNA(seq1, seq2)).to eq(true)
         end
