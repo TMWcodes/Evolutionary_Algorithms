@@ -5,26 +5,9 @@ $aminoacid_dictionary = {'UUC'=>'F', 'UUU'=>'F','UUA'=>'L', 'UUG'=>'L', 'CUU'=>'
 
 
 def protein(rna)
-    rna = rna.upcase
-    prime5 = 0
-    codon_size = 3
-    prime3 = codon_size
-    aminoacids = []
-   
-    while prime5 < rna.length
-    codon = rna[prime5...prime3] 
-    aminoacid = $aminoacid_dictionary[codon]
-    if aminoacid == 'Stop'
-        break
-    end
-    aminoacids << aminoacid
-    prime5 = prime5 + codon_size
-    prime3 = prime5 + codon_size
-    end
-    
-    aminoacids.join("")
-    
-     
+    rna.upcase.scan(/.../).take_while{|s| s }.map{|match|$aminoacid_dictionary[match]}.join
+    # != 'UAA' && s != 'UGA' && s != 'UAG'
 end
 
-# protein('AGGUGACACCGCAAGCCUUAUAUUAGC')
+# p protein('AGCGAGCCCAUUCAUCGC') 
+#=> "CWS"

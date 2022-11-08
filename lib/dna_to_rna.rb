@@ -7,4 +7,4 @@ def dna_to_rna(dna = "GATCTCCGTC")
     dna
 end
 
-dna_to_rna()
+# dna_to_rna()
