@@ -20,5 +20,6 @@ Reverse Frame 1: GCT AAT ATA AGG CTT GCG GTG TCA CCT
 Reverse Frame 2: G CTA ATA TAA GGC TTG CGG TGT CAC CT
 Reverse Frame 3: GC TAA TAT AAG GCT TGC GGT GTC ACC T")
         end
+
     end
 end

@@ -5,6 +5,7 @@ require 'dna_to_rna'
 require 'rna_to_protein_sequence'
 require '3_reading_frame'
 require '6_reading_frames'
+require 'translate_6frames'
 
 describe 'gene integration' do
     context 'after creating a dna strand' do
@@ -83,8 +84,8 @@ describe 'gene integration' do
             seq1 = "TGCGATGAATGGGCTCGCTCC"
             seq2 = DNA_strand(seq1).reverse
             check_DNA(seq1, seq2)
-            p mRNA_seq1 = dna_to_rna(seq1) 
-            p mRNA_seq2 = dna_to_rna(seq2) 
+            mRNA_seq1 = dna_to_rna(seq1) 
+            mRNA_seq2 = dna_to_rna(seq2) 
             expect(decompose_double_strand(mRNA_seq1, mRNA_seq2)).to eq("Frame 1: UGC GAU GAA UGG GCU CGC UCC\nFrame 2: U GCG AUG AAU GGG CUC GCU CC\nFrame 3: UG CGA UGA AUG GGC UCG CUC C\nReverse Frame 1: GGA GCG AGC CCA UUC AUC GCA\nReverse Frame 2: G GAG CGA GCC CAU UCA UCG CA\nReverse Frame 3: GG AGC GAG CCC AUU CAU CGC A")
         end
         it 'turns mrna into protien' do
@@ -97,14 +98,7 @@ describe 'gene integration' do
             # expect(protein()).to eq("CDEWARSTLLTRAR")
         end
         it 'turns mrna reading frames into protien' do
-            seq1 = "TGCGATGAATGGGCTCGCTCC"
-            seq2 = DNA_strand(seq1).reverse
-            check_DNA(seq1, seq2)
-            mRNA_seq1 = dna_to_rna(seq1) 
-            mRNA_seq2 = dna_to_rna(seq2) 
-            f2 = seq1[1..-3].scan(/.../).join" "
-           frames = decompose_double_strand(mRNA_seq1, mRNA_seq2).join("")
-            expect(protein(frames)).to eq("CDEWARSTLLTRAR")
+            expect(translate_with_frame(dna="TGCGATGAATGGGCTCGCTCC", frames=[1,2,3,-1,-2,-3])).to eq(["CDEWARS", "AMNGLA", "R*MGSL", "GASPFIA", "ERAHSS", "SEPIHR"])
         end
     end
 
