@@ -16,6 +16,8 @@ chromosome = chromosome.dup
     chromosome
 end
 
+
+
 # mutate("00000", 1 )
 
 # "11010"

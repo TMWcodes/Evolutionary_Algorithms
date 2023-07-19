@@ -5,7 +5,8 @@ def decompose_single_strand(dna)
     frame2 = dna[0] + " " + f2 + " " + dna[-2..-1]
     f3 = dna[2..-2].scan(/.../).join" "
     frame3 = dna[0..1] + " " + f3 + " " + dna[-1]
-    ["Frame 1: #{frame1}", "Frame 2: #{frame2}", "Frame 3: #{frame3}"].join(", ")
+    ["Frame 1: #{frame1}", "Frame 2: #{frame2}", "Frame 3: #{frame3}"].join("\n")
 end
+
 
 decompose_single_strand("AGGTGACACCGCAAGCCTTATATTAGC")

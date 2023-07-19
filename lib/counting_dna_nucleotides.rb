@@ -26,4 +26,4 @@ def get_counted_nucleotides(dna)
  
 end
 
-get_counted_nucleotides('TTT')
+# get_counted_nucleotides('TTT')
