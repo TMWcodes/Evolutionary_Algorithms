@@ -109,11 +109,19 @@ fitness = lambda do |chromosome|
   1.0 * ideal.chars.zip(chromosome.chars).count { |x, y| x == y } / ideal.size
 end
 
+# def fitness(chromosome)
+#   ideal = '11110000'
+#   # Compare each character of the chromosome with the ideal target
+#   1.0 * ideal.chars.zip(chromosome.chars).count { |x, y| x == y } / ideal.size 
+# end
+
+fitness_values = gene.map_population_fit(population) { |chromosome| fitness(chromosome) }
 
 population_fitness = map_population_fit(population, &fitness)
 #=> [{:chromosome=>"11001111", :fitness=>0.25}, {:chromosome=>"01110001", :fitness=>0.75}, {:chromosome=>"00010011", :fitness=>0.375}]
-p fitness_values = population_fitness.map { |individual| individual[:fitness] }
+fitness_values = population_fitness.map { |individual| individual[:fitness] }
 #=> [0.25, 0.75, 0.375, 0.5, 0.5, 0.5, 0.625, 0.625]
-# selected_individual = roulette_wheel_selection(population, fitness_values, 20)
+selected_individual = roulette_wheel_selection(population, fitness_values, 20)
+#=> ["10000110", "00110100", "01011000", "00111100", "01110111", "01000001", "01110101", "11110011", "01110001", "00111011", "10111010", "01110110", "00110000", "10110011", "10011000", "01100000", "10000100", "11100110", "11011101", "11101100"]
 
 # "Selected individual: #{selected_individual}"
