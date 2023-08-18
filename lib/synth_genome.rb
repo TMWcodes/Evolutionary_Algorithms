@@ -89,13 +89,15 @@ class GeneticAlgorithm
     p population = ["11000010", "00100010", "00111110", "11010110", "00111111", "00101101", "01000001", "11101000", "00010000", "10101101"]
 
     # loop
+    fitness = lambda do |chromosome|
+      ideal = '10101010'
+      # Compare each character of the chromosome with the ideal target
+      1.0 * ideal.chars.zip(chromosome.chars).count { |x, y| x == y } / ideal.size 
+    end
+    count = 0
     iterations.times do
       # **Evaluate fitness for each chromosome in the population**
-      fitness = lambda do |chromosome|
-        ideal = '10101010'
-        # Compare each character of the chromosome with the ideal target
-        1.0 * ideal.chars.zip(chromosome.chars).count { |x, y| x == y } / ideal.size 
-      end
+      
     
       # fitness calc
    
@@ -124,14 +126,23 @@ class GeneticAlgorithm
       population = mutated
       # p best_chromosome = population.max_by(2) { |individual| individual[:fitness]}
       # no implicit conversion of Symbol into Integer (TypeError)
-      p best_fitness = map_population_fit(population, &fitness).map {|var| var[:fitness]}.max
+      best_fitness = map_population_fit(population, &fitness).map {|var| var[:fitness]}.max
       # p best_fitness[:chromosome]
-      p best_chromosome = map_population_fit(population, &fitness).map {|var| var[:chromosome]}.max
-      # if best_chromosome == ideal
-      #   break
-      # end
-
+      best_chromosome = map_population_fit(population, &fitness).map {|var| var[:chromosome]}.max
+      if best_chromosome == '10101010'
+        puts "Generation: #{count}"
+        break
+      end
+     
+      count += 1
+     
     end
+   
+      # p best_fitness[:chromosome]
+    best_chromosome = map_population_fit(population, &fitness).map {|var| var[:chromosome]}.max
+    best_fitness = map_population_fit(population, &fitness).map {|var| var[:fitness]}.max
+    puts "Best Chromosome: #{best_chromosome}, Best fitness: #{best_fitness}"
+      
   end
 
 end

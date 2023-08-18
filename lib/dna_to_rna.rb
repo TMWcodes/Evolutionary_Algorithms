@@ -7,4 +7,12 @@ def dna_to_rna(dna = "GATCTCCGTC")
     dna
 end
 
-# dna_to_rna()
+def rna_to_dna(rna = "UGCGAUGAAUGGGCUCGCUCC")
+  for i in 0..(rna.size - 1)
+    # if i == "T"
+    rna[i] = rna[i] == "U" ? "T" : rna[i]
+  end
+  rna
+end
+
+puts rna_to_dna()
