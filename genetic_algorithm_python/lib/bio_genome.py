@@ -1,4 +1,5 @@
 import random
+import bio_fitness_functions as bf
 
 class Genome:
     def __init__(self):
@@ -16,9 +17,18 @@ class Genome:
 
     # ---------------- BIO FUNCTIONS ----------------
 
-    def generate_ssDNA(self, length):
-        return ''.join(random.choice("ATGC") for _ in range(length))
+    def generate_ssDNA(self, length, ensure_start_stop=True):
+        """Generate a random DNA sequence. Optionally enforce start/stop codons."""
+        if length < 6:  # too short to add both codons
+            return ''.join(random.choice("ATGC") for _ in range(length))
 
+        if ensure_start_stop:
+            middle_length = length - 6
+            middle_seq = ''.join(random.choice("ATGC") for _ in range(middle_length))
+            stop_codon = random.choice(["TAA", "TAG", "TGA"])
+            return "ATG" + middle_seq + stop_codon
+        else:
+            return ''.join(random.choice("ATGC") for _ in range(length))
     def generate_rna(self, length):
         return ''.join(random.choice("AUGC") for _ in range(length))
 
@@ -62,7 +72,6 @@ class Genome:
             return ["" for _ in frames]
 
         def to_rna(seq): return seq.replace('T', 'U')
-
         forward = [to_rna(dna[i:]) for i in range(3)]
         reverse = [to_rna(self.cDNA(dna[::-1])[i:]) for i in range(3)]
 
@@ -76,144 +85,99 @@ class Genome:
         return [translations[frame_map[f]] for f in frames]
 
     # ---------------- EVOLUTIONARY FUNCTIONS ----------------
-
     def mutate(self, dna, p_m=0.01):
         """Codon-aware mutation: one base per codon, with transition bias"""
         bases = "ATGC"
         transitions = {"A":"G","G":"A","C":"T","T":"C"}
         dna_list = list(dna)
-
-        for i in range(0, len(dna_list), 3):  # step codon by codon
+        for i in range(0, len(dna_list), 3):
             if random.random() < p_m:
                 codon = dna_list[i:i+3]
                 if not codon:
                     continue
-                pos = random.randrange(len(codon))  # pick a base inside codon
+                pos = random.randrange(len(codon))
                 base = codon[pos]
-                if random.random() < 0.7:  # transition
+                if random.random() < 0.7:
                     codon[pos] = transitions[base]
-                else:  # transversion
+                else:
                     codon[pos] = random.choice([b for b in bases if b != base and b != transitions[base]])
                 dna_list[i:i+3] = codon
         return ''.join(dna_list)
 
     def crossover(self, pair, p_c=0.7):
-        """Codon-aware recombination crossover (splits at multiples of 3)"""
+        """Codon-aware recombination crossover"""
         if len(pair) != 2:
             return pair
         c1, c2 = pair
         if random.random() > p_c:
             return [c1, c2]
-
         max_point = min(len(c1), len(c2))
-        if max_point < 6:  # too short to cross
+        if max_point < 6:
             return [c1, c2]
-
         point = random.randrange(3, max_point-3, 3)
         return [c1[:point] + c2[point:], c2[:point] + c1[point:]]
 
-    def phenotype_fitness(self, dna, target_protein):
-        """DNA -> RNA -> Protein, then compare to target protein"""
-        rna = self.dna_to_rna(dna)
-        protein = self.protein(rna)
-        return sum(a == b for a, b in zip(protein, target_protein)) / max(len(target_protein), 1)
-
-    def dna_fitness(self, candidate, target_dna):
-        """Evaluate DNA with biological constraints, with a fitness floor."""
-        length_penalty = abs(len(candidate) - len(target_dna)) / len(target_dna)
-        start_penalty = 0 if candidate.startswith("ATG") else 0.3
-        stop_codons = {"TAA", "TAG", "TGA"}
-        stop_penalty = 0 if candidate[-3:] in stop_codons else 0.3
-
-        match_score = sum(a == b for a, b in zip(candidate, target_dna)) / len(target_dna)
-        target_protein = self.protein(self.dna_to_rna(target_dna))
-        candidate_protein = self.protein(self.dna_to_rna(candidate))
-        pheno_score = sum(a == b for a, b in zip(candidate_protein, target_protein)) / max(len(target_protein), 1)
-
-        fitness = (0.5 * match_score + 0.5 * pheno_score)
-        fitness -= (length_penalty + start_penalty + stop_penalty)
-
-        return max(0.01, fitness)  # fitness floor
-
-    def run_evolution(self, target, population_size=10, p_c=0.7, p_m=0.01, iterations=100):
+    # ---------------- MODULAR EVOLUTION ----------------
+    def run_evolution(
+    self,
+    fitness_func,
+    length,
+    population_size=20,
+    p_c=0.7,
+    p_m=0.01,
+    iterations=100,
+    use_frames=False,
+    check_complement=False,
+    verbose=True
+):
         """
-        Evolve a population of DNA sequences toward a target sequence (DNA or protein).
-
-        Parameters:
-        - target: str
-            Target sequence. If it contains only A/T/G/C, treated as DNA.
-            Otherwise, treated as a protein sequence.
-        - population_size: int
-            Number of sequences per generation.
-        - p_c: float
-            Probability of performing crossover between pairs.
-        - p_m: float
-            Probability of mutating a base (codon-aware).
-        - iterations: int
-            Number of generations to run.
-
-        Notes:
-        - Fitness function is either:
-            * Fraction of matching nucleotides (DNA target)
-            * Fraction of matching amino acids after DNA -> RNA -> Protein (protein target)
-        - Mutation is codon-aware with transition bias.
-        - Crossover occurs at codon boundaries.
-        - Fitness floor ensures population never becomes empty.
+        Run evolution on sequences of given length using a provided fitness function.
+        Options:
+            use_frames: evaluate max fitness across 6 reading frames
+            check_complement: apply slight bonus/malus for complementary strand check
         """
-
-        # Determine if target is DNA or protein
-        dna_mode = all(base in "ATGC" for base in target)
-        if dna_mode:
-            target_dna = target
-            target_protein = self.protein(self.dna_to_rna(target))  # for phenotype scoring
-        else:
-            target_dna = None
-            target_protein = target
-
-        # Estimate DNA length: if protein target, each amino acid = 3 bases
-        length = len(target if dna_mode else target_protein) * 3
-
-        # Generate initial population of random DNA sequences
         population = [self.generate_ssDNA(length) for _ in range(population_size)]
+        best_overall = None
 
-        for generation in range(iterations):
-            scored = []  # list of dictionaries: {"dna": ..., "fitness": ...}
-
-            # Evaluate fitness for each individual
+        for gen in range(iterations):
+            scored = []
             for dna in population:
-                if dna_mode:
-                    # DNA fitness: nucleotide match + phenotype check
-                    fit = self.dna_fitness(dna, target_dna)
-                else:
-                    # Protein fitness: DNA -> RNA -> Protein -> compare to target protein
-                    fit = self.phenotype_fitness(dna, target_protein)
-                scored.append({"dna": dna, "fitness": fit})
+                score = fitness_func(dna)
 
-            # Safety: if population somehow empty, regenerate
-            if not scored:
-                population = [self.generate_ssDNA(length) for _ in range(population_size)]
-                continue
+                if use_frames:
+                    frames = self.translate_with_frame(dna)
+                    frame_score = max(fitness_func(f) for f in frames)
+                    score = max(score, frame_score)
 
-            # Select the best candidate in the current generation
-            best = max(scored, key=lambda x: x["fitness"])
+                if check_complement:
+                    score *= 1.05 if self.check_DNA(dna, dna) else 0.95
 
-            # If perfect match is found, stop evolution early
-            if best["fitness"] >= 1.0:
-                print(f"Perfect match at generation {generation}: {best['dna']}")
-                return best
+                scored.append({"dna": dna, "fitness": score})
+
+            best_gen = max(scored, key=lambda x: x["fitness"])
+            if not best_overall or best_gen["fitness"] > best_overall["fitness"]:
+                best_overall = best_gen
+
+            # ---- Verbose logging every 100 generations ----
+            if verbose and (gen % 100 == 0 or gen == iterations - 1):
+                avg_fit = sum(x["fitness"] for x in scored) / len(scored)
+                print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}")
+
+            # Perfect match
+            if best_gen["fitness"] >= 1.0:
+                if verbose:
+                    print(f"Perfect match at generation {gen}: {best_gen['dna']}")
+                return best_gen
 
             # ----------------- SELECTION -----------------
-            # Roulette wheel selection based on fitness
-            total_fit = sum(x["fitness"] for x in scored) or 1e-9  # avoid division by zero
+            total_fit = sum(x["fitness"] for x in scored) or 1e-9
             probs = [x["fitness"]/total_fit for x in scored]
-
-            # Build cumulative probabilities for selection
-            cumulative, cumsum = [], 0
+            cumulative = []
+            cumsum = 0
             for p in probs:
                 cumsum += p
                 cumulative.append(cumsum)
 
-            # Select individuals for next generation
             selected = []
             for _ in range(population_size):
                 r = random.random()
@@ -221,54 +185,49 @@ class Genome:
                     if r <= prob:
                         selected.append(scored[i]["dna"])
                         break
-
-            # Safety: if selection failed, regenerate population
             if not selected:
                 selected = [self.generate_ssDNA(length) for _ in range(population_size)]
 
             # ----------------- CROSSOVER -----------------
-            # Pair up selected sequences and perform codon-aware crossover
             pairs = [selected[i:i+2] for i in range(0, len(selected), 2)]
             offspring = []
             for pair in pairs:
                 if len(pair) == 2:
                     offspring.extend(self.crossover(pair, p_c=p_c))
                 else:
-                    # Odd number of individuals: carry forward without crossover
                     offspring.extend(pair)
 
             # ----------------- MUTATION -----------------
-            # Apply codon-aware mutation to each offspring
             population = [self.mutate(dna, p_m=p_m) for dna in offspring]
 
-            # Optional: log best fitness for monitoring
-            # print(f"Generation {generation}: Best fitness = {best['fitness']:.3f}")
-
-        # Return the best sequence after all generations
-        print(f"Best after {iterations} generations: {best['dna']} (fitness={best['fitness']:.2f})")
-        return best
+        if verbose:
+            print(f"Best after {iterations} generations: {best_overall['dna']} (fitness={best_overall['fitness']:.2f})")
+        return best_overall
 
 
 # ---------------- DEMO ----------------
 if __name__ == "__main__":
-    g = Genome()
+    genome = Genome()
+    target = "ATGCGTACGTTAGC"
+    length = len(target)
 
-   # DNA target (keep short-ish for demonstration)
-target_dna = "ATGCGTACGTTAGC"
-g.run_evolution(
-    target_dna,
-    population_size=50,   # larger population → more diversity
-    p_c=0.8,             # crossover probability stays high
-    p_m=0.05,            # higher mutation → faster exploration
-    iterations=500       # more generations to allow convergence
-)
+    # DNA fitness run
+    genome.run_evolution(
+        lambda dna: bf.dna_fitness(dna, target, genome),
+        length,
+        population_size=50,
+        p_c=0.8,
+        p_m=0.05,
+        iterations=500
+    )
 
-# # Protein target
-# target_protein = "MVP"  # (Met-Val-Pro)
-# g.run_evolution(
-#     target_protein,
-#     population_size=60,   # more candidates
-#     p_c=0.8,
-#     p_m=0.08,             # higher mutation for short protein→DNA mapping
-#     iterations=400        # enough iterations to converge on target
-# )
+    # Protein fitness run
+    target_protein = genome.protein(genome.dna_to_rna(target))
+    genome.run_evolution(
+        lambda dna: bf.phenotype_fitness(dna, target_protein, genome),
+        length,
+        population_size=50,
+        p_c=0.8,
+        p_m=0.05,
+        iterations=500
+    )
