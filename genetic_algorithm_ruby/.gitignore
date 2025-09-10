@@ -15,6 +15,8 @@
 # dna_to_rna_spec.rb
 
 *.md
+!README.md
+
 
 binary_genetic_algorithms.rb
 binary_genetic_algorithms_spec.rb
