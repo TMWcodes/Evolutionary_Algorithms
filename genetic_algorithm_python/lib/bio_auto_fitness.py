@@ -163,7 +163,7 @@ CODON_TASK_MAP = {
     # TAA - TAT
     
     "TAC": ("Weekly Summary", 18, 2.0),
-    "TAG": ("Monthly Audit", 25, 3.0),
+
     "TAT": ("Quick Reminder", 3, 0.1),
 
     # TCA - TCT
@@ -173,7 +173,7 @@ CODON_TASK_MAP = {
     "TCT": ("Generate CSV", 8, 0.75),
 
     # TGA - TGT
-    "TGA": ("Notify Users", 5, 0.25),
+
     "TGC": ("System Reboot", 7, 0.5),
     "TGG": ("Script Audit", 15, 2.0),
     "TGT": ("Quick Patch", 6, 0.25),
@@ -184,8 +184,8 @@ CODON_TASK_MAP = {
     "TTG": ("Performance Audit", 18, 2.0),
     "TTT": ("Code Deployment", 20, 3.0),
 }
-
-
+START_CODON = "ATG"
+STOP_CODONS = {"TAA", "TAG", "TGA"}
 
 def translate_dna_to_tasks(dna: str):
     """
@@ -194,6 +194,10 @@ def translate_dna_to_tasks(dna: str):
     """
     codons = [dna[i:i+3] for i in range(0, len(dna), 3)]
     tasks = []
+
+    if not codons or codons[0] != START_CODON:
+        return tasks  # invalid schedule if no proper start
+    
     for codon in codons:
         if codon in CODON_TASK_MAP:
             tasks.append(CODON_TASK_MAP[codon])
@@ -224,25 +228,25 @@ def automation_fitness(dna: str, max_hours: float = 8.0):
 # ------------------------------
 # Demo
 # ------------------------------
-if __name__ == "__main__":
-    # DNA-based demo
-    dna_example = "AAAATGATC"  # Data Cleanup + Model Training + DB Sync
-    tasks = translate_dna_to_tasks(dna_example)
-    print("DNA:", dna_example)
-    print("Decoded tasks:")
-    for task in tasks:
-        print(f" - {task[0]} ({task[1]} pts, {task[2]} hr)")
-    print("Fitness:", automation_fitness(dna_example))
+# if __name__ == "__main__":
+#     # DNA-based demo
+#     dna_example = "AAAATGATC"  # Data Cleanup + Model Training + DB Sync
+#     tasks = translate_dna_to_tasks(dna_example)
+#     print("DNA:", dna_example)
+#     print("Decoded tasks:")
+#     for task in tasks:
+#         print(f" - {task[0]} ({task[1]} pts, {task[2]} hr)")
+#     print("Fitness:", automation_fitness(dna_example))
 
-    # Task-list based demo
-    task_dict = {
-        "script1": {"points": 50, "time": 2},
-        "script2": {"points": 30, "time": 1.5},
-        "script3": {"points": 10, "time": 0.5},
-    }
-    af = AutomationFitness(task_dict)
-    candidate = ["script1", "script3"]
-    print("\nTask list candidate:", candidate)
-    print("Points/hr:", af.points_per_hour(candidate))
-    print("Weighted balance:", af.weighted_balance(candidate))
-    print("Deadline penalty:", af.deadline_penalty(candidate, deadline=3))
+#     # Task-list based demo
+#     task_dict = {
+#         "script1": {"points": 50, "time": 2},
+#         "script2": {"points": 30, "time": 1.5},
+#         "script3": {"points": 10, "time": 0.5},
+#     }
+#     af = AutomationFitness(task_dict)
+#     candidate = ["script1", "script3"]
+#     print("\nTask list candidate:", candidate)
+#     print("Points/hr:", af.points_per_hour(candidate))
+#     print("Weighted balance:", af.weighted_balance(candidate))
+#     print("Deadline penalty:", af.deadline_penalty(candidate, deadline=3))
