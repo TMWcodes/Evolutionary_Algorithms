@@ -1,6 +1,7 @@
 import random
 import bio_fitness_functions as bf
-
+import bio_auto_fitness as af  # add this near the top
+# from bio_auto_fitness import AutomationFitness
 class Genome:
     def __init__(self):
         self.aminoacid_dict = {
@@ -207,27 +208,57 @@ class Genome:
 
 # ---------------- DEMO ----------------
 if __name__ == "__main__":
+    # genome = Genome()
+    # target = "ATGCGTACGTTAGC"
+    # length = len(target)
+
+    # # DNA fitness run
+    # genome.run_evolution(
+    #     lambda dna: bf.dna_fitness(dna, target, genome),
+    #     length,
+    #     population_size=50,
+    #     p_c=0.8,
+    #     p_m=0.05,
+    #     iterations=500
+    # )
+
+    # # Protein fitness run
+    # target_protein = genome.protein(genome.dna_to_rna(target))
+    # genome.run_evolution(
+    #     lambda dna: bf.phenotype_fitness(dna, target_protein, genome),
+    #     length,
+    #     population_size=50,
+    #     p_c=0.8,
+    #     p_m=0.05,
+    #     iterations=500
+    # )
+
+
     genome = Genome()
-    target = "ATGCGTACGTTAGC"
-    length = len(target)
 
-    # DNA fitness run
-    genome.run_evolution(
-        lambda dna: bf.dna_fitness(dna, target, genome),
-        length,
+
+    # Define DNA length (number of codons/tasks)
+    length = 9  # e.g., 3 tasks
+
+    # Wrap the automation fitness function
+    automation_dna_fitness = lambda dna: af.automation_fitness(dna, max_hours=8.0)
+
+    # Run the GA
+    result = genome.run_evolution(
+        fitness_func=automation_dna_fitness,
+        length=length,
         population_size=50,
         p_c=0.8,
         p_m=0.05,
-        iterations=500
+        iterations=500,
+        verbose=True
     )
 
-    # Protein fitness run
-    target_protein = genome.protein(genome.dna_to_rna(target))
-    genome.run_evolution(
-        lambda dna: bf.phenotype_fitness(dna, target_protein, genome),
-        length,
-        population_size=50,
-        p_c=0.8,
-        p_m=0.05,
-        iterations=500
-    )
+    # Decode DNA to tasks
+    best_tasks = af.translate_dna_to_tasks(result['dna'])
+    print("\nBest evolved schedule:")
+    for task in best_tasks:
+        print(f" - {task[0]} ({task[1]} pts, {task[2]} hr)")
+
+    print(f"DNA sequence: {result['dna']}")
+    print(f"Fitness: {result['fitness']:.3f}")
