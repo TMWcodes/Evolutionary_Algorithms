@@ -1,4 +1,4 @@
-# tests/test_genome_integration.py
+# tests/test_genome_fitness_integration.py
 import pytest
 from lib.bio_genome import Genome
 from lib.genome_fitness import dna_fitness
@@ -33,7 +33,6 @@ class TestGenomeIntegration:
     def test_evolution_improves_fitness(self):
         """Check that GA actually improves fitness over generations."""
         def dummy_fitness(dna):
-            # simple: proportion of 'A'
             return sum(1 for b in dna if b == "A") / len(dna)
 
         best = self.g.run_evolution(
@@ -45,18 +44,18 @@ class TestGenomeIntegration:
             p_c=0.7,
             verbose=False
         )
-        # Fitness should improve from random (~0.25) to >=0.5
         assert best['fitness'] >= 0.5
 
     def test_evolution_with_critical_sites(self):
         """Check GA respects critical residue weighting."""
         def critical_fitness(dna):
-            return dna_fitness(
+            _, _, combined = dna_fitness(
                 dna,
                 self.target_dna,
                 self.g,
                 critical_sites=self.critical_sites
             )
+            return combined  # GA expects a float
 
         best = self.g.run_evolution(
             fitness_func=critical_fitness,
@@ -67,18 +66,18 @@ class TestGenomeIntegration:
             p_c=0.7,
             verbose=False
         )
-        # High fitness should correspond to preserving critical sites
         assert best['fitness'] > 0.3
 
     def test_evolution_environment_aware(self):
         """Check GA adapts to environment constraints (e.g., stop codon)."""
         def env_fitness(dna):
-            return dna_fitness(
+            _, _, combined = dna_fitness(
                 dna,
                 self.target_dna,
                 self.g,
                 environment=self.environment
             )
+            return combined  # return float for GA
 
         best = self.g.run_evolution(
             fitness_func=env_fitness,
@@ -89,5 +88,4 @@ class TestGenomeIntegration:
             p_c=0.7,
             verbose=False
         )
-        # Fitness should favor sequences ending with valid stop codons
         assert best['dna'][-3:] in {"TAA", "TAG", "TGA"}

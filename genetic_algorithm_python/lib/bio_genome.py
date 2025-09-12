@@ -13,7 +13,7 @@ class Genome:
             'AAU':'N','AAC':'N','AAA':'K','AAG':'K','GAU':'D','GAC':'D','GAA':'E','GAG':'E',
             'UGU':'C','UGC':'C','UGG':'W','CGU':'R','CGC':'R','CGA':'R','CGG':'R','AGA':'R','AGG':'R',
             'GGU':'G','GGC':'G','GGA':'G','GGG':'G',
-            'UAA':'Stop','UGA':'Stop','UAG':'Stop'
+            'UAA':'*','UGA':'*','UAG':'*'
         }
 
     # ---------------- BIO FUNCTIONS ----------------
@@ -177,7 +177,8 @@ class Genome:
             verbose: print progress
         """
         population = [self.generate_ssDNA(length) for _ in range(population_size)]
-        best_overall = None
+        scored = [{"dna": dna, "fitness": fitness_func(dna)} for dna in population]
+        best_overall = max(scored, key=lambda x: x["fitness"])
 
         for gen in range(iterations):
             scored = []
@@ -199,9 +200,11 @@ class Genome:
                 best_overall = best_gen
 
             # ---- Verbose logging every 100 generations ----
+         # inside run_evolution, after calculating best_gen
             if verbose and (gen % 100 == 0 or gen == iterations - 1):
                 avg_fit = sum(x["fitness"] for x in scored) / len(scored)
-                print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}")
+                print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}, Best Seq: {best_gen['dna']}")
+
 
             # ---- EARLY STOP ONLY IF NORMALIZED ----
             if normalized and best_gen["fitness"] >= 1.0:

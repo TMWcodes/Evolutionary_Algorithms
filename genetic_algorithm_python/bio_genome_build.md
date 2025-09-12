@@ -192,6 +192,70 @@ Best after 500 generations: ATGCGTACGTTAGC (fitness=0.90)
 Gen 0: Best 0.750, Avg 0.330
 Perfect match at generation 7: ATGCGTACCCTTA
 
+### version 9 (big refactor + testing)
+
+Gen 0: Best 0.542, Avg 0.347
+Gen 100: Best 0.900, Avg 0.692
+Gen 199: Best 0.900, Avg 0.661
+Best after 200 generations: ATGTTTAAAGGG (fitness=0.900)
+Best sequence: ATGTTTAAAGGG
+Fitness: 0.9
+
+### version 10
+
+added best seq print
+Gen 0: Best 0.583, Avg 0.348, Best Seq: ATGTCTAAATAA
+Gen 100: Best 0.858, Avg 0.641, Best Seq: ATGTTTAAAGGC
+Gen 199: Best 0.900, Avg 0.694, Best Seq: ATGTTTAAAGGG
+Best after 200 generations: ATGTTTAAAGGG (fitness=0.900)
+Best sequence: ATGTTTAAAGGG
+Fitness: 0.9
+
+### version 11
+
+Gen 0: Best 0.583, Avg 0.362, Best Seq: ATGGTAAAATGA
+Gen 100: Best 0.692, Avg 0.633, Best Seq: ATGATTAAGGGG
+Gen 199: Best 0.733, Avg 0.725, Best Seq: ATGCTTAAAGGG
+Best after 200 generations: ATGTTTAAGGGG (fitness=0.858)
+
+Best DNA sequence: ATGTTTAAGGGG
+Fitness: 0.858
+Best protein (phenotype): MFKG
+
+### version 12
+
+Gen 0: Best 0.625, Avg 0.341, Best Seq: ATGTTTGAATAG
+Gen 100: Best 0.858, Avg 0.656, Best Seq: ATGTTTAAGGGG
+Gen 199: Best 0.900, Avg 0.724, Best Seq: ATGTTTAAAGGG
+Best after 200 generations: ATGTTTAAAGGG (fitness=0.900)
+
+--- GA Result ---
+Target DNA sequence: ATGTTTAAAGGG
+Best DNA sequence: ATGTTTAAAGGG
+
+Target protein: MFKG
+Best protein: MFKG
+
+Final fitness: 0.900
+
+### version 13
+
+Gen 0: Best 0.542, Avg 0.344, Best Seq: ATGTTCTGATAG
+Gen 100: Best 0.750, Avg 0.673, Best Seq: ATGTTTAAGTGA
+Gen 199: Best 0.817, Avg 0.699, Best Seq: ATGTTTAAGGGA
+Best after 200 generations: ATGTTTAAGGGG (fitness=0.858)
+
+--- GA Result ---
+Target DNA sequence: ATGTTTAAAGGG
+Best DNA sequence: ATGTTTAAGGGG
+
+Target protein: MFKG
+Best protein: MFKG
+
+DNA fitness: 0.917
+Protein fitness: 1.000
+Combined fitness: 0.858
+
 # version 1 (auto_fitness)
 
 Gen 0: Best 8.790, Avg 4.569
