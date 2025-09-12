@@ -1,4 +1,0 @@
-
-# punnet square
-
-# gene mapping

@@ -1,6 +1,6 @@
 import random
-import bio_fitness_functions as bf
-import bio_auto_fitness as af  # add this near the top
+import lib.genome_fitness as gf
+# from genetic_algorithm_python.lib.automation_fitness import AutomationFitness, AMINO_TASK_MAP
 # from bio_auto_fitness import AutomationFitness
 class Genome:
     def __init__(self):
@@ -86,56 +86,95 @@ class Genome:
         return [translations[frame_map[f]] for f in frames]
 
     # ---------------- EVOLUTIONARY FUNCTIONS ----------------
-    def mutate(self, dna, p_m=0.01):
-        """Codon-aware mutation: one base per codon, with transition bias"""
+    # bio_genome.py (partial)
+    def mutate(self, dna, p_m=0.01, max_mut_per_codon=1, allow_frameshift=False):
+        """Codon-aware mutation with optional multiple changes per codon and frameshift."""
         bases = "ATGC"
         transitions = {"A":"G","G":"A","C":"T","T":"C"}
         dna_list = list(dna)
+        
         for i in range(0, len(dna_list), 3):
             if random.random() < p_m:
                 codon = dna_list[i:i+3]
                 if not codon:
                     continue
-                pos = random.randrange(len(codon))
-                base = codon[pos]
-                if random.random() < 0.7:
-                    codon[pos] = transitions[base]
-                else:
-                    codon[pos] = random.choice([b for b in bases if b != base and b != transitions[base]])
+                num_mut = max_mut_per_codon if max_mut_per_codon <= len(codon) else len(codon)
+                for _ in range(num_mut):
+                    pos = random.randrange(len(codon))
+                    base = codon[pos]
+                    if random.random() < 0.7:
+                        codon[pos] = transitions[base]
+                    else:
+                        codon[pos] = random.choice([b for b in bases if b != base and b != transitions[base]])
                 dna_list[i:i+3] = codon
+
+        # Optional frameshift: randomly insert/delete 1 base at end with small probability
+        if allow_frameshift and random.random() < p_m:
+            if random.random() < 0.5 and len(dna_list) > 3:  # deletion
+                dna_list.pop(random.randrange(len(dna_list)))
+            else:  # insertion
+                dna_list.insert(random.randrange(len(dna_list)+1), random.choice(bases))
+                
         return ''.join(dna_list)
 
-    def crossover(self, pair, p_c=0.7):
-        """Codon-aware recombination crossover"""
+    # bio_genome.py (partial)
+    def crossover(self, pair, p_c=0.7, homology_preserve=False):
+        """Codon-aware recombination with optional homology preservation."""
         if len(pair) != 2:
             return pair
         c1, c2 = pair
         if random.random() > p_c:
             return [c1, c2]
+
         max_point = min(len(c1), len(c2))
         if max_point < 6:
             return [c1, c2]
-        point = random.randrange(3, max_point-3, 3)
+
+        # Homology-aware: find a common motif to preserve
+        if homology_preserve:
+            motif_len = 3
+            for i in range(len(c1)-motif_len+1):
+                motif = c1[i:i+motif_len]
+                if motif in c2:
+                    point = i + motif_len
+                    break
+            else:
+                point = random.randrange(3, max_point-3, 3)
+        else:
+            point = random.randrange(3, max_point-3, 3)
+
         return [c1[:point] + c2[point:], c2[:point] + c1[point:]]
+
 
     # ---------------- MODULAR EVOLUTION ----------------
     def run_evolution(
-    self,
-    fitness_func,
-    length,
-    population_size=20,
-    p_c=0.7,
-    p_m=0.01,
-    iterations=100,
-    use_frames=False,
-    check_complement=False,
-    verbose=True
-):
+        self,
+        fitness_func,
+        length,
+        population_size=20,
+        p_c=0.7,
+        p_m=0.01,
+        iterations=100,
+        use_frames=False,
+        check_complement=False,
+        normalized=False,   # <--- NEW FLAG
+        verbose=True
+    ):
         """
         Run evolution on sequences of given length using a provided fitness function.
-        Options:
+
+        Args:
+            fitness_func: function(dna) -> float
+            length: length of DNA string
+            population_size: number of individuals in population
+            p_c: crossover probability
+            p_m: mutation probability
+            iterations: number of generations
             use_frames: evaluate max fitness across 6 reading frames
             check_complement: apply slight bonus/malus for complementary strand check
+            normalized: if True, assumes max fitness = 1.0 and allows early stop
+                        if False, runs all iterations and only tracks best-so-far
+            verbose: print progress
         """
         population = [self.generate_ssDNA(length) for _ in range(population_size)]
         best_overall = None
@@ -164,17 +203,16 @@ class Genome:
                 avg_fit = sum(x["fitness"] for x in scored) / len(scored)
                 print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}")
 
-            # Perfect match
-            if best_gen["fitness"] >= 1.0:
+            # ---- EARLY STOP ONLY IF NORMALIZED ----
+            if normalized and best_gen["fitness"] >= 1.0:
                 if verbose:
                     print(f"Perfect match at generation {gen}: {best_gen['dna']}")
                 return best_gen
 
             # ----------------- SELECTION -----------------
             total_fit = sum(x["fitness"] for x in scored) or 1e-9
-            probs = [x["fitness"]/total_fit for x in scored]
-            cumulative = []
-            cumsum = 0
+            probs = [x["fitness"] / total_fit for x in scored]
+            cumulative, cumsum = [], 0
             for p in probs:
                 cumsum += p
                 cumulative.append(cumsum)
@@ -202,13 +240,19 @@ class Genome:
             population = [self.mutate(dna, p_m=p_m) for dna in offspring]
 
         if verbose:
-            print(f"Best after {iterations} generations: {best_overall['dna']} (fitness={best_overall['fitness']:.2f})")
+            print(
+                f"Best after {iterations} generations: "
+                f"{best_overall['dna']} (fitness={best_overall['fitness']:.3f})"
+            )
         return best_overall
 
 
 # ---------------- DEMO ----------------
 if __name__ == "__main__":
-    # genome = Genome()
+    genome = Genome()
+
+   
+
     # target = "ATGCGTACGTTAGC"
     # length = len(target)
 
@@ -232,33 +276,52 @@ if __name__ == "__main__":
     #     p_m=0.05,
     #     iterations=500
     # )
+##########################
 
+# af = AutomationFitness(amino_task_map=AMINO_TASK_MAP)
+#  # -------------------------
+# # Define DNA length (number of codons/tasks)
+# # -------------------------
+# length = 21  # 7 codons/tasks if 3 bases per codon
 
-    genome = Genome()
+# # -------------------------
+# # Wrap the automation fitness function
+# # -------------------------
+# automation_dna_fitness = lambda dna: af.automation_fitness(
+#     genome.dna_to_rna(dna),  # convert DNA → RNA internally if needed
+#     max_hours=8.0
+# )
 
+# # -------------------------
+# # Run the genetic algorithm
+# # -------------------------
+# result = genome.run_evolution(
+#     fitness_func=automation_dna_fitness,
+#     length=length,
+#     population_size=50,
+#     p_c=0.8,
+#     p_m=0.05,
+#     iterations=500,
+#     verbose=True
+# )
 
-    # Define DNA length (number of codons/tasks)
-    length = 9  # e.g., 3 tasks
+# # -------------------------
+# # Decode DNA → RNA → Protein → Tasks
+# # -------------------------
+# best_dna = result['dna']
+# best_rna = genome.dna_to_rna(best_dna)
+# best_protein = genome.protein(best_rna)
+# best_tasks = af.protein_to_tasks(best_protein)
 
-    # Wrap the automation fitness function
-    automation_dna_fitness = lambda dna: af.automation_fitness(dna, max_hours=8.0)
+# # -------------------------
+# # Print evolved schedule and sequences
+# # -------------------------
+# print("\nBest evolved schedule:")
+# for task in best_tasks:
+#     print(f" - {task[0]} ({task[1]} pts, {task[2]} hr)")
 
-    # Run the GA
-    result = genome.run_evolution(
-        fitness_func=automation_dna_fitness,
-        length=length,
-        population_size=50,
-        p_c=0.8,
-        p_m=0.05,
-        iterations=500,
-        verbose=True
-    )
-
-    # Decode DNA to tasks
-    best_tasks = af.translate_dna_to_tasks(result['dna'])
-    print("\nBest evolved schedule:")
-    for task in best_tasks:
-        print(f" - {task[0]} ({task[1]} pts, {task[2]} hr)")
-
-    print(f"DNA sequence: {result['dna']}")
-    print(f"Fitness: {result['fitness']:.3f}")
+# print("\nSequence summary:")
+# print(f"DNA sequence:     {best_dna}")
+# print(f"RNA sequence:     {best_rna}")
+# print(f"Protein sequence: {best_protein}")
+# print(f"Fitness:          {result['fitness']:.3f}")
