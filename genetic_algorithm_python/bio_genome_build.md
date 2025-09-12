@@ -256,7 +256,7 @@ DNA fitness: 0.917
 Protein fitness: 1.000
 Combined fitness: 0.858
 
-# version 1 (auto_fitness)
+### version 1 (auto_fitness)
 
 Gen 0: Best 8.790, Avg 4.569
 Perfect match at generation 0: ATGTGACTGCCAATTACATAG
@@ -273,7 +273,7 @@ Best evolved schedule:
 
 Remove the if fitness >= 1.0 stop condition in automation runs.
 
-# version 2 (bio accurate)
+### version 2 (bio accurate)
 
 Gen 0: Best 0.010, Avg 0.010
 Gen 100: Best 0.010, Avg 0.010
@@ -287,7 +287,7 @@ Best evolved schedule:
 DNA sequence: ATGGACGTAACCGCTAAATAG
 Fitness: 0.010
 
-# version 3
+### version 3
 
 C:\Users\Tyrone\Documents\Programming\coding\Evolutionary_algorithms\genetic_algorithm_python\lib> python -m bio_genome
 Gen 0: Best 7.704, Avg 6.044
@@ -309,3 +309,32 @@ Best evolved schedule:
 - Data Aggregation (12 pts, 1.0 hr)
   DNA sequence: ATGAATATTAACATTAGCACG
   Fitness: 9.128
+
+### version 4
+
+ithm_python> python -m lib.run_bio_ga
+Gen 0: Best 0.010, Avg 0.010, Best Seq: ATGAAGGATTAAAGGGCAGCACGGAACTAA
+Gen 100: Best 0.010, Avg 0.010, Best Seq: CTGGAGTTGCCTAATGCGGTGTTAGCATAA
+Gen 199: Best 0.010, Avg 0.010, Best Seq: CTAGGCTTGCCCCACGCGACATTGGCATGG
+Best after 200 generations: ATGAAGGATTAAAGGGCAGCACGGAACTAA (fitness=0.010)
+
+--- Automation GA Result ---
+Best DNA sequence: ATGAAGGATTAAAGGGCAGCACGGAACTAA
+Translated RNA seq: AUGAAGGAUUAAAGGGCAGCACGGAACUAA
+Translated protein:
+Task list: []
+Automation fitness: 0.010
+
+### version 5
+
+Gen 0: Best 0.771, Avg 0.438, Best Seq: ATGTGCTTGTGAGGTAGACAGCCGGACTAG
+Gen 100: Best 0.771, Avg 0.753, Best Seq: ATGTCATCCTGATCTTGGCGACTTCATTAG
+Gen 199: Best 0.800, Avg 0.783, Best Seq: ATGTTGTCATGATTCCGGCAACTTAATTAG
+Best after 200 generations: ATGTTGTTATGATTCCGACAACTTCATTAG (fitness=0.825)
+
+--- Automation GA Result ---
+Best DNA sequence: ATGTTGTTATGATTCCGACAACTTCATTAG
+Translated RNA seq: AUGUUGUUAUGAUUCCGACAACUUCAUUAG
+Translated protein: MLL*FRQLH*
+Task list: [('Model Training', 30, 5.0), ('Deploy Script', 18, 1.5), ('Deploy Script', 18, 1.5)]
+Automation fitness: 0.825
