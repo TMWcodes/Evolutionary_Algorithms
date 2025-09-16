@@ -256,6 +256,26 @@ DNA fitness: 0.917
 Protein fitness: 1.000
 Combined fitness: 0.858
 
+### Version 14
+
+tested at high character number 5400 (tiny genome - microvirus MP11 5517.)
+50 population - 200 runs
+--- GA Result ---
+DNA fitness: 0.260
+Protein fitness: 0.072
+Combined fitness: 0.166
+
+50 population - 500 runs.
+
+--- GA Result ---
+DNA fitness: 0.261
+Protein fitness: 0.066
+Combined fitness: 0.163
+
+with such a small population, the GA explores only a fraction.
+GA quickly converges on mediocre local optima.
+Evolutionary runs on larger genomes often require tens of thousands of generations.
+
 ### version 1 (auto_fitness)
 
 Gen 0: Best 8.790, Avg 4.569
@@ -338,3 +358,56 @@ Translated RNA seq: AUGUUGUUAUGAUUCCGACAACUUCAUUAG
 Translated protein: MLL*FRQLH*
 Task list: [('Model Training', 30, 5.0), ('Deploy Script', 18, 1.5), ('Deploy Script', 18, 1.5)]
 Automation fitness: 0.825
+
+# combined
+
+(run_bio_ga.py)
+
+### version 1
+
+en 0: Best 0.417, Avg 0.342, Best Seq: ATGTTAGGATGA
+Gen 100: Best 0.625, Avg 0.551, Best Seq: ATGTTTCAATGA
+Gen 199: Best 0.792, Avg 0.783, Best Seq: ATGTTTAAATAG
+Best after 200 generations: ATGTTTAAATAG (fitness=0.792)
+
+--- GA Result ---
+Target DNA sequence: ATGTTTAAAGGG
+Best DNA sequence: ATGTTTAAATAG
+
+Target protein: MFKG
+Best protein: MFK\*
+
+DNA fitness: 0.833
+Protein fitness: 0.750
+Combined fitness: 0.792
+Gen 0: Best 0.700, Avg 0.425, Best Seq: ATGTCTTAACCCATGCTAACCCAGCCCTAA
+Gen 100: Best 0.456, Avg 0.427, Best Seq: ATGAGCCTAGCGAGTTCAGTTGAATAGCAG
+Gen 199: Best 0.461, Avg 0.445, Best Seq: ATGAATCCCGGAAGTCAAGTCGAATCTCAA
+Best after 200 generations: ATGTCTTAACCCATGCTAACCCAGCCCTAA (fitness=0.700)
+
+--- Automation GA Result ---
+Best DNA sequence: ATGTCTTAACCCATGCTAACCCAGCCCTAA
+Translated RNA seq: AUGUCUUAACCCAUGCUAACCCAGCCCUAA
+Translated protein: MS*PMLTQP*
+Task list: [('Model Training', 30, 5.0), ('Web Scraping', 12, 1.0)]  
+Automation fitness: 0.700
+
+### version 2
+
+So now your GA is evolving proteins that:
+✅ Start with M (start amino acid).
+✅ Avoid too many stops.
+✅ Avoid redundant repeat tasks.
+✅ Still balance total points vs. time.
+
+Gen 0: Best 0.850, Avg 0.366, Best Seq: ATGATAGAGAGCTACTGCTGAACACGTACAGCGATCCTGTATGATCGTAG
+Gen 100: Best 0.850, Avg 0.829, Best Seq: ATGATTGAAAGCTACTGCTGAAGTGCACACTCAGCTGAGATCTATGGCAG
+Gen 199: Best 0.890, Avg 0.788, Best Seq: ATGATTGAAAATTACTGGTGAACTGCACACTCAACTGAGCTCTACGGCGG
+Best after 200 generations: ATGATTGAAAATCACTGGTGAAGTGCACACTCAACTGAGCTCTACGGCGG (fitness=0.910)
+
+--- Automation GA Result ---
+Best DNA sequence: ATGATTGAAAATCACTGGTGAAGTGCACACTCAACTGAGCTCTACGGCGG
+Translated RNA seq: AUGAUUGAAAAUCACUGGUGAAGUGCACACUCAACUGAGCUCUACGGCGG
+Translated protein: MIENHW\*SAHSTELYG
+Task list: [('Model Training', 30, 5.0), ('Code Linting', 4, 0.25), ('Email Summary', 5, 0.25), ('Unit Test Run', 10, 0.75), ('API Health Check', 8, 0.5), ('Backup Verification', 9, 0.5)]
+Automation fitness: 0.910

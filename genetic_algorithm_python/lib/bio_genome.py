@@ -1,5 +1,7 @@
 import random
 import lib.genome_fitness as gf
+from typing import Tuple
+
 # from genetic_algorithm_python.lib.automation_fitness import AutomationFitness, AMINO_TASK_MAP
 # from bio_auto_fitness import AutomationFitness
 class Genome:
@@ -85,6 +87,26 @@ class Genome:
         frame_map = {1:0, 2:1, 3:2, -1:3, -2:4, -3:5}
         return [translations[frame_map[f]] for f in frames]
 
+    @staticmethod
+    def modular_crossover(dna1: str, dna2: str, module_size: int = 90) -> tuple[str, str]:
+        # Cut into modules
+        chunks1 = [dna1[i:i+module_size] for i in range(0, len(dna1), module_size)]
+        chunks2 = [dna2[i:i+module_size] for i in range(0, len(dna2), module_size)]
+        # Swap random modules
+        if chunks1 and chunks2:
+            i, j = random.randint(0, len(chunks1)-1), random.randint(0, len(chunks2)-1)
+            chunks1[i], chunks2[j] = chunks2[j], chunks1[i]
+        return ''.join(chunks1), ''.join(chunks2)
+
+    @staticmethod
+    def gene_duplication(dna: str, min_len: int = 30, max_len: int = 200) -> str:
+        if len(dna) < min_len:
+            return dna
+        start = random.randint(0, len(dna) - min_len)
+        length = random.randint(min_len, min(max_len, len(dna) - start))
+        segment = dna[start:start+length]
+        insert_pos = random.randint(0, len(dna))
+        return dna[:insert_pos] + segment + dna[insert_pos:]
     # ---------------- EVOLUTIONARY FUNCTIONS ----------------
     # bio_genome.py (partial)
     def mutate(self, dna, p_m=0.01, max_mut_per_codon=1, allow_frameshift=False):
@@ -157,7 +179,7 @@ class Genome:
         iterations=100,
         use_frames=False,
         check_complement=False,
-        normalized=False,   # <--- NEW FLAG
+        normalized=False,
         verbose=True
     ):
         """
@@ -172,54 +194,69 @@ class Genome:
             iterations: number of generations
             use_frames: evaluate max fitness across 6 reading frames
             check_complement: apply slight bonus/malus for complementary strand check
-            normalized: if True, assumes max fitness = 1.0 and allows early stop
-                        if False, runs all iterations and only tracks best-so-far
+            normalized: if True, early stop on perfect fitness
             verbose: print progress
         """
+
+        # Generate initial random population of DNA sequences
         population = [self.generate_ssDNA(length) for _ in range(population_size)]
+
+        # Score initial population using fitness function
         scored = [{"dna": dna, "fitness": fitness_func(dna)} for dna in population]
+
+        # Keep track of overall best sequence so far
         best_overall = max(scored, key=lambda x: x["fitness"])
 
+        # Main GA loop over generations
         for gen in range(iterations):
-            scored = []
+            scored = []  # reset scores for this generation
+
+            # Evaluate each individual
             for dna in population:
                 score = fitness_func(dna)
 
+                # Optionally, evaluate all 6 reading frames and take max
                 if use_frames:
                     frames = self.translate_with_frame(dna)
                     frame_score = max(fitness_func(f) for f in frames)
                     score = max(score, frame_score)
 
+                # Optional bonus/malus for self-complementary DNA
                 if check_complement:
                     score *= 1.05 if self.check_DNA(dna, dna) else 0.95
 
                 scored.append({"dna": dna, "fitness": score})
 
+            # Identify best individual in current generation
             best_gen = max(scored, key=lambda x: x["fitness"])
+
+            # Update overall best if current generation has improvement
             if not best_overall or best_gen["fitness"] > best_overall["fitness"]:
                 best_overall = best_gen
 
-            # ---- Verbose logging every 100 generations ----
-         # inside run_evolution, after calculating best_gen
+            # Verbose logging every 100 generations or last gen
             if verbose and (gen % 100 == 0 or gen == iterations - 1):
                 avg_fit = sum(x["fitness"] for x in scored) / len(scored)
                 print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}, Best Seq: {best_gen['dna']}")
 
-
-            # ---- EARLY STOP ONLY IF NORMALIZED ----
+            # Early stop if normalized fitness reaches 1.0
             if normalized and best_gen["fitness"] >= 1.0:
                 if verbose:
                     print(f"Perfect match at generation {gen}: {best_gen['dna']}")
                 return best_gen
 
             # ----------------- SELECTION -----------------
+            # Compute selection probabilities proportional to fitness
             total_fit = sum(x["fitness"] for x in scored) or 1e-9
             probs = [x["fitness"] / total_fit for x in scored]
+
+            # Build cumulative distribution for roulette wheel selection
             cumulative, cumsum = [], 0
             for p in probs:
                 cumsum += p
                 cumulative.append(cumsum)
 
+            # Select new population based on probabilities
             selected = []
             for _ in range(population_size):
                 r = random.random()
@@ -227,10 +264,12 @@ class Genome:
                     if r <= prob:
                         selected.append(scored[i]["dna"])
                         break
+            # If selection fails, fallback to random sequences
             if not selected:
                 selected = [self.generate_ssDNA(length) for _ in range(population_size)]
 
             # ----------------- CROSSOVER -----------------
+            # Pair up selected individuals and apply crossover
             pairs = [selected[i:i+2] for i in range(0, len(selected), 2)]
             offspring = []
             for pair in pairs:
@@ -239,15 +278,25 @@ class Genome:
                 else:
                     offspring.extend(pair)
 
+            # ----------------- GENE DUPLICATION / MODULAR ASSEMBLY -----------------
+            next_gen = []
+            for dna in offspring:
+                # Small chance of duplicating a segment if sequence is long
+                if len(dna) > 60 and random.random() < 0.05:
+                    dna = self.gene_duplication(dna)
+                next_gen.append(dna)
+
+            # Occasional modular crossover for longer sequences
+            if len(next_gen) > 1 and max(len(d) for d in next_gen) > 90 and random.random() < 0.05:
+                i, j = random.sample(range(len(next_gen)), 2)
+                child1, child2 = self.modular_crossover(next_gen[i], next_gen[j])
+                next_gen[i], next_gen[j] = child1, child2
+
             # ----------------- MUTATION -----------------
-            population = [self.mutate(dna, p_m=p_m) for dna in offspring]
+            # Apply codon-aware mutations to next generation
+            population = [self.mutate(dna, p_m=p_m) for dna in next_gen]
 
+        # Final report after all generations
         if verbose:
-            print(
-                f"Best after {iterations} generations: "
-                f"{best_overall['dna']} (fitness={best_overall['fitness']:.3f})"
-            )
+            print(f"Best after {iterations} generations: {best_overall['dna']} (fitness={best_overall['fitness']:.3f})")
         return best_overall
-
-
-# ---------------- DEMO ----------------

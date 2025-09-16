@@ -13,17 +13,30 @@ def run_bio_ga_evolution(target_dna, generations=200, pop_size=20):
 
     # Fitness wrapper for GA: only returns combined fitness (GA uses this for selection)
     def fitness_wrapper(dna):
+        """
+        Wrapper to evaluate DNA fitness for GA.
+        Adds small length normalization to prevent very long sequences from dominating.
+        """
         dna_score, protein_score, combined = gf.dna_fitness(dna, target_dna, genome)
-        return combined  # GA selection uses combined fitness
 
-    # Run the GA with the wrapper fitness function
+        # Penalize sequences that are excessively longer than target
+        length_penalty = min(1.0, len(target_dna)/len(dna)) if len(dna) > len(target_dna) else 1.0
+
+        # Slight bonus for sequences containing repeated motifs (to encourage modular assembly)
+        repeat_bonus = 1.0 + 0.05 * (len(dna) - len(set(dna))) / len(dna)
+
+        # Combine modifiers with the GA fitness
+        combined_adj = combined * length_penalty * repeat_bonus
+
+        return combined_adj #Run the GA with the wrapper fitness function
+        
     result = genome.run_evolution(
         fitness_func=fitness_wrapper,    # Fitness function to evaluate sequences
         length=len(target_dna),          # Length of DNA sequences
         population_size=pop_size,        # Number of sequences per generation
         iterations=generations,          # Number of generations to evolve
         normalized=False,                # Whether to normalize fitness scores
-        verbose=True                     # Print progress per generation
+        verbose=False                    # Print progress per generation
     )
 
     # After GA finishes, recompute all fitness scores for the best sequence
@@ -32,15 +45,15 @@ def run_bio_ga_evolution(target_dna, generations=200, pop_size=20):
 
     # Print summary of GA results
     print("\n--- GA Result ---")
-    print(f"Target DNA sequence:   {target_dna}")
-    print(f"Best DNA sequence:     {result['dna']}\n")
-    print(f"Target protein:        {target_protein}")
-    print(f"Best protein:          {best_protein}\n")
+    # print(f"Target DNA sequence:   {target_dna}")
+    # print(f"Best DNA sequence:     {result['dna']}\n")
+    # print(f"Target protein:        {target_protein}")
+    # print(f"Best protein:          {best_protein}\n")
     print(f"DNA fitness:           {dna_score:.3f}")
     print(f"Protein fitness:       {protein_score:.3f}")
     print(f"Combined fitness:      {combined:.3f}")
 
-def run_auto_ga_evolution(amino_task_map=None, generations=200, pop_size=20):
+def run_auto_ga_evolution(amino_task_map=None, generations=500, pop_size=20):
     """
     Run the GA using AutomationFitness (protein-inspired task schedules)
     """
@@ -48,7 +61,7 @@ def run_auto_ga_evolution(amino_task_map=None, generations=200, pop_size=20):
     auto_fitness = AutomationFitness(amino_task_map=amino_task_map)
 
     # Decide DNA length (number of nucleotides, must be multiple of 3 for codons)
-    dna_length = 30  
+    dna_length = 50
 
     bases = ['A', 'T', 'G', 'C']
     # Random initial DNA is not really used as "target"; GA evolves its own population
@@ -89,6 +102,7 @@ def run_auto_ga_evolution(amino_task_map=None, generations=200, pop_size=20):
 
 # Run as script with default target DNA
 if __name__ == "__main__":
- 
-    # run_bio_ga_evolution(target)
-    run_auto_ga_evolution()
+    target = "atgacatgttatagtcctattcctgcttgctttagtaaatcacaatatgctaagacaggaaagaaaaatatacatcttgttttgcatgaaaattatgacgaacataataaagttattaaagatgagaaatggagattgaatgagtgttcttttcctcatgctttgtatgaatatatctttttaccatgtagaaagtgtgtaggatgtcgttcagataacgctaaaatgtggtctcttcgtgcatataatgagatgaaattacataaaaagaattgttttataactttgacttatgataatgcttcagatttggtcgtaaaagaccctctatgtattgctagtttaagatataaacattttcaaaattttatgaaaagattacgtaagaaaactggtaaaaaattaggttatcttgtatgtggtgagtatggtttaaaagatggtagagctcattggcatgcaatattatttgattttgattttgaagataaggagttaatctatgttaaaaaaggatataaacactattattcaacactacttcaagagtgttggtcgacgtatgacaaaaaaacagactcgtataatccgattggttttattgaccttgctgattgcgattatgactgttgtagttatgtttctcagtatgtgcttaaaaaattacctgttaatcagaatggcattgctgttggttcctatgttgatgatgtaactggtgaagttaaagatattgagttaactgatgtatgtccacctatggttaggagttctaaaaatcctgctataggttataattggtataagaaatttggagagaatgcatgtgaaaaaggttttatccctattgttacgaatgaaggtaagaaggttcgtaaagttcgtacgcctgcttattactattctaaatttgaagtagataatcctcaaaaatttgaaatattaaaaaatgttaaggaagaaaaaatgagaaaatattacaaggaaaatccaatagatttagataaattgaattcttggagtgaagctcatttatatagaattaaaaaacggatgaaagaggtattgacacattttaaaaaatagtttatattgcttgtataataatttaataatttagtttatttacttttatctatatgcctcaaatgtactcgtagcgagggatacagataatatatattatgtaagaaggaggaaaaaaacatgaacacaacaattattaaccaaacgggagaaaacaacgctacaaacgcaagctgtaaagctgattttagcttggtctttgctgtaaaggatttaaagtctgacaattttggttcccttttagtttgtaatacaagcgacgaggcgattagagctactaaggttagattgatgtatgaccaaggaagtatgatacaacaattccctgctgattttatgctttatcacgttggctattttaacacaaaaactggtgttatggaaagtgtcggaatagctattcctgttaagtcaattttagatgttagcttggaattagaacaagagcgaaaagtgaaagctgttgatattccagaatttatgaaaggagaggaaaatgacaatcgatgtgaagaatcaaattctagtgaatgtgttgaaagtattggataaacttatcgatttcattctagaagtattaaacaaagagaatgcataaatgattgatatttgtaaagattgtacattatacgtcttaaaaaaactaggtaggacaatgctttgtgcggagtcctatcttgcacttttaatttacatctttactcatgttagatttagtgtaactttttgcaagaaatttagtaaacttgtcgaccgatatcgagctagtgaaatatacagtacccctagcccgtccggcgatgaggacaaaataaggagaaacaatgaagataaaagttagatggtgtttaaatactgattttatttgtgataaggagaatgaagataatggctaaattttttacaccttatacaactacaaaaaaagttgttgttgaatttaaagagccaagtcttactgatcaatcttataaagatgagtgcgacttaggttttattattgaaaattatgtaagtaaaggaatacctttgccacaatctactatgaattatcaagactgtactactgtccaagattatcaatctgcaatgatgttagttgcagaagctaagtctaattttgaacaattaccttctaaggctagagatgaatttggaactgttgaaaattatcttgatttcatttctaaaccagagaatttaaaaacatcgtatgaaaaaggttatattgacccttctacagttgatttaatggacgtttatccagaaagataccaaacattatctgaacagatagaaactcctactgtagagcctgtggttaatccctctgaaactccttcaacagaggtgacggcataaagtaaatgcaaatagttctcttgttactatttgcatttactgacaccgttaggtggctaaagggtttgaaggttctaaaaccttcaataccccctaaaaaacagttaaaaagaaattaacccgaagggttgtatatattgaattagaaggagattttttatgtatgagatagatagaatgattgaaggttataaagagagacttaatgaaattatttatgatatcggacaatttcaatatcaattaacagaaaaacttaaagacaaacagaatttagaaaaatttattgaaagattagaaagaaaggatgataaaatatgtcaacagtaatggcacaacacggacatcaaatgcactcatttgaatattatccgtcagcacatatttcaagaagtaaatttaaccgttctcattcattgataacaacaatgaatgcaggttatattgttcctatttggcacgatttagcatatcctggcgatacacttattatgtcagctagaacattaacacgtttagctactcaattagtaccatttatgagtaatgtttatatggatatacatttctggtgtgttccacttcgtttagtatgggaacactggacagctatgaatggagaacaactaaatcctggagatagtacagattatttaactccgcaaataacagcaactccaacagtaggcgatatttatgattatttcaatgtacctataggtgttgaatctaagtttaatgcttttaactttagagcatataacttagtttataacgaatggtatcgagatgaaaacttacaagagagagtacctcaaatagtttcagataatgatacagaaagtaattatacacttttaaaacgtggtaagagaaaagattactttacaggagctttaccatggccacaaaaaggcagtgaagttgatttgcctttaggtatatctgcgccagtttctgtatatggtaatggtatgtctttaggattaacagatggttctatagaaatgggttcaattgtttatggtcaacaatattttgttcgtactgctgcatctggggttgatgttggcacagttgtaagcactgctggtagtactggaaataatgtagtcgttggtgtttctagtaatcctgagacctctggtcttattggtactgctgatttatcagatgctacatctgcaactattaactcattacgtcaagctttcgctattcaaaaaatgttagaaaaagatgctagaggtggtacaagatatatcgaaatgatactttcacatttcggtgttaaatctccagatgcaagattacaacgtccagagttcttaggtggtgctacatttgacttaaatctttctgttgttcctcaaacatcagctacaactgaaacttctacacctttaggtgatttggcttcttatggtgttatcaatggttcatcaaaacgtattgtacactcatttactgagcattgtgtagtatttggtgttgctagtattcgctctgaatattattatcaacaaggcttagaaagagattattcaaaacgttcaagaattgatttttatttgcctgttactgctcacttaggagaacaagctgtatataataaagaaatttatgcacaaggtacagacgaagatgaaaatgtatttggttatcaagaacgttggtctgaaatgagatataagaattcttatattactggtcaaacacgttctactgcaagtcaacctttagattattggcatttaggtcaagagtttgcaagcttgcctgctcttaacgctgagtttattcaagaaaaccctcctattgatagagttattgctcttcaagagtcagaaaatactcctcaatttatttgtaattttttctttgatgagtattgggtaagacctatgcctgtatattctactccaggtatgcaatcacacttttaagttatatcggtacgatagagtgagatttttaatctcgctctattgaaccgaaaggaaggataatattatggcagattggttaagttctttaatttctggtggttttaatatggctggtcaagctattaattataactatcaaaagaggttaatggaaaaacaatatgatttgaatataaaaggtttaaaggaaagtcctttagctattcgtacaggtttggagagtgcaggatataatcctataacttttgcaggtcaaactaacgctagtgctagtgtaggttctgctccttctgtatctgatagtaatttgggtactagtattgttaatgcttatcaacaaaacaaattaaatgaagctaatgttgatgcaacaaatgctcaagcagaattgtctaatgaacaagccaaaactgaacaagcgaaaagaactaatcttgagtttcaaaatcgtatgttagatgttgaaaaacatttaaaacaaaaagatttagatacttatgatagacgtttttatacacaactttatgaacaaatgcagagagcagaaaattatagagctatggcaaatttacaaggttataatgccgagtctcaacgtatagcttctaatgctcaaatgcttggttcacaagctagacaatcagacgctgttactaatagatatttagcaaagtatggtactcctcaacgtagttttttaactttgttaaataagcctaaaactaaaggaaaatattaattccatttttcagcagtttttacacctaaccaaaatataactattatacaaaataattcaaacataaggagattttacaatgaaaagaaaacaactgtcaaggaaagcaggtgctaagatgtttaaacgttctggtcaaatgatgaactctaaaaatcagcctaagatttctagaggtggtattagattttagtactcctatttaacacacatagtccaagaggagtttttactcctctttttttaagagaggaatgtatat".replace("\n", "")  # Example DNA
+    target_caps = target.upper()
+    run_bio_ga_evolution(target_caps)
+    # run_auto_ga_evolution()
