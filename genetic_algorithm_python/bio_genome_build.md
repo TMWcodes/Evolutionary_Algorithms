@@ -256,7 +256,7 @@ DNA fitness: 0.917
 Protein fitness: 1.000
 Combined fitness: 0.858
 
-### Version 14
+### Version 14 (Long genome tests)
 
 tested at high character number 5400 (tiny genome - microvirus MP11 5517.)
 50 population - 200 runs
@@ -275,6 +275,71 @@ Combined fitness: 0.163
 with such a small population, the GA explores only a fraction.
 GA quickly converges on mediocre local optima.
 Evolutionary runs on larger genomes often require tens of thousands of generations.
+
+add gene duplication and modular crossover methods
+
+### version 15
+
+20 pop, 200 gen
+added gene duplication and modular crossover methods
+--- GA Result ---
+DNA fitness: 0.261
+Protein fitness: 0.070
+Combined fitness: 0.165
+
+200 pop, 200 gen (run time 1m)
+--- GA Result ---
+DNA fitness: 0.273
+Protein fitness: 0.079
+Combined fitness: 0.176
+
+more population wont do much
+problem isn’t computational power — it’s the combinatorial complexity.
+
+establish
+Current GA performance vs genome size
+Variability with mutation rate and population size
+How often valid proteins are produced
+
+test
+Population diversity
+Number of modular events applied
+Average fitness impact of events
+
+increased mutation to 5%
+20 population, 200 gens
+--- GA Result ---
+DNA fitness: 0.269
+Protein fitness: 0.063
+Combined fitness: 0.166
+
+20 gens, 200 population
+--- GA Result ---
+DNA fitness: 0.277
+Protein fitness: 0.068
+Combined fitness: 0.173
+
+at 20, 200, 10% mutations
+DNA fitness: 0.269
+Protein fitness: 0.063
+Combined fitness: 0.166
+
+50, 1000, 10%
+--- GA Result ---
+DNA fitness: 0.263
+Protein fitness: 0.072
+Combined fitness: 0.168
+
+Even at 10% per codon, random mutations in very long sequences (~5,000 bases) mostly introduce noise rather than functional improvements.
+
+### version 16
+
+long sequence
+with Local duplications, Transpositions, Recombination.
+100 pop, 2000, gen
+DNA fitness: 0.276
+Protein fitness: 0.075
+Combined fitness: 0.176
 
 ### version 1 (auto_fitness)
 
@@ -358,6 +423,65 @@ Translated RNA seq: AUGUUGUUAUGAUUCCGACAACUUCAUUAG
 Translated protein: MLL*FRQLH*
 Task list: [('Model Training', 30, 5.0), ('Deploy Script', 18, 1.5), ('Deploy Script', 18, 1.5)]
 Automation fitness: 0.825
+
+### version 6
+
+```
+Gen 0: Best 0.070, Avg 0.048
+Gen 100: Best 0.292, Avg 0.235
+Gen 200: Best 0.366, Avg 0.309
+Gen 300: Best 0.334, Avg 0.294
+Gen 400: Best 0.269, Avg 0.231
+Gen 499: Best 0.293, Avg 0.264
+Best after 500 generations:(fitness=0.394)
+
+--- Automation GA Result ---
+Translated protein: ANTKPDNQLNLTGLAPRQLAAQTNPLQQKKQDSLMSKLAKLISPILTLTNPYLKQTCRQKQDSLKLILT**TR*CQTATTANVRLLATKLPTLAKLILT*LDYLPPNLPNSSFATPRQA*LDYSTTNPYHNLT
+
+Total amino acids in translated protein: 128
+
+Task Schedule:
+Idx  Task                      Pts   Time(min)  Cum.Time(min) Cum.Pts
+---------------------------------------------------------------------------
+1    Log Analysis              9     10.0       10.0         9.0
+2    Unit Test Run             10    15.0       25.0         19.0
+3    DB Sync                   20    25.0       50.0         39.0
+4    Email Parsing             6     10.0       60.0         45.0
+5    User Report Gen           14    15.0       75.0         59.0
+6    Data Cleanup              10    15.0       90.0         69.0
+7    Unit Test Run             10    15.0       105.0        79.0
+8    Quick Health Check        3     10.0       115.0        82.0
+9    Deploy Script             18    15.0       130.0        100.0
+10   Unit Test Run             10    15.0       145.0        110.0
+11   Deploy Script             18    15.0       160.0        128.0
+12   DB Sync                   20    25.0       185.0        148.0
+13   Data Aggregation          12    15.0       200.0        160.0
+14   Deploy Script             18    15.0       215.0        178.0
+15   Log Analysis              9     10.0       225.0        187.0
+16   User Report Gen           14    15.0       240.0        201.0
+17   Report Generation         15    20.0       260.0        216.0
+18   Quick Health Check        3     10.0       270.0        219.0
+19   Deploy Script             18    15.0       285.0        237.0
+20   Log Analysis              9     10.0       295.0        246.0
+21   Log Analysis              9     10.0       305.0        255.0
+23   DB Sync                   20    25.0       340.0        278.0
+24   Unit Test Run             10    15.0       355.0        288.0
+25   User Report Gen           14    15.0       370.0        302.0
+26   Deploy Script             18    15.0       385.0        320.0
+27   Quick Health Check        3     10.0       395.0        323.0
+28   Quick Health Check        3     10.0       405.0        326.0
+29   Email Parsing             6     10.0       415.0        332.0
+30   Email Parsing             6     10.0       425.0        338.0
+31   Quick Health Check        3     10.0       435.0        341.0
+32   Data Cleanup              10    15.0       450.0        351.0
+33   Web Scraping              12    15.0       465.0        363.0
+34   Deploy Script             18    15.0       480.0        381.0
+
+Total points: 381.0
+Final cumulative time (minutes): 480.0
+
+Automation fitness: 0.394
+```
 
 # combined
 

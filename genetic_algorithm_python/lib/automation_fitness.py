@@ -1,112 +1,125 @@
 from typing import List, Dict, Tuple, Optional
-from collections import Counter
 
-# ------------------------------
-# Example AMINO ACID → TASK MAP
-# ------------------------------
+# Default amino acid → task map
 AMINO_TASK_MAP = {
-    "M": ("Model Training", 30, 5.0),
-    "F": ("Database Migration", 25, 3.0),
-    "L": ("Deploy Script", 18, 1.5),
-    "I": ("Code Linting", 4, 0.25),
-    "V": ("System Audit", 16, 2.0),
-    "S": ("Web Scraping", 12, 1.0),
-    "P": ("User Report Gen", 14, 1.5),
-    "T": ("DB Sync", 20, 3.0),
-    "A": ("Log Analysis", 9, 0.75),
-    "Y": ("Data Normalization", 11, 1.0),
-    "H": ("API Health Check", 8, 0.5),
-    "Q": ("Quick Health Check", 3, 0.1),
-    "N": ("Unit Test Run", 10, 0.75),
-    "K": ("Email Parsing", 6, 0.5),
-    "D": ("Data Cleanup", 10, 1.5),
-    "E": ("Email Summary", 5, 0.25),
-    "C": ("Cache Clean", 6, 0.5),
-    "W": ("Backup Verification", 9, 0.5),
-    "R": ("Report Generation", 15, 2.0),
-    "G": ("Data Aggregation", 12, 1.0),
+    "M": ("Model Training", 30, 25),      
+    "F": ("Database Migration", 25, 20),  
+    "L": ("Deploy Script", 18, 15),       
+    "I": ("Code Linting", 4, 10),         
+    "V": ("System Audit", 16, 20),        
+    "S": ("Web Scraping", 12, 15),        
+    "P": ("User Report Gen", 14, 15),     
+    "T": ("DB Sync", 20, 25),             
+    "A": ("Log Analysis", 9, 10),         
+    "Y": ("Data Normalization", 11, 15),  
+    "H": ("API Health Check", 8, 10),     
+    "Q": ("Quick Health Check", 3, 10),   
+    "N": ("Unit Test Run", 10, 15),       
+    "K": ("Email Parsing", 6, 10),        
+    "D": ("Data Cleanup", 10, 15),        
+    "E": ("Email Summary", 5, 10),        
+    "C": ("Cache Clean", 6, 10),          
+    "W": ("Backup Verification", 9, 15),  
+    "R": ("Report Generation", 15, 20),   
+    "G": ("Data Aggregation", 12, 15),    
     "*": ("End Marker", 0, 0),
 }
 
-
-# ------------------------------
-# AutomationFitness Class
-# ------------------------------
 class AutomationFitness:
     """
-    Provides GA-friendly fitness for automation tasks:
-      - Interprets protein sequences as tasks
-      - Computes normalized fitness score with soft penalties
+    Converts protein sequences → task schedule.
+    Fitness encourages:
+      - Max points within 8 hours
+      - Diversity (no back-to-back repeats)
+      - Filling the schedule (time utilization)
     """
 
-    START_AA = "M"
-    STOP_AA = "*"
-
-    def __init__(self, amino_task_map: Optional[Dict[str, Tuple[str, float, float]]] = None):
+    def __init__(self, amino_task_map: Optional[Dict[str, Tuple[str, float, float]]] = None,
+                 max_minutes: float = 480.0):
         self.amino_task_map = amino_task_map or AMINO_TASK_MAP
+        self.max_minutes = max_minutes
 
-    def protein_to_tasks(self, protein: str, require_start: bool = True) -> List[Tuple[str, float, float]]:
-        """
-        Convert a protein sequence to a list of tasks.
-
-        Parameters
-        ----------
-        protein : str
-            Protein sequence.
-        require_start : bool
-            If True, sequences must start with START_AA to yield tasks (strict mode).
-            If False, allow any sequence and produce tasks for any known amino acids.
-
-        Returns
-        -------
-        tasks : List[Tuple[str,float,float]]
-            List of task tuples.
-        """
+    def protein_to_tasks(self, protein: str) -> List[Tuple[str, float, float]]:
+        """Translate protein sequence → list of tasks, ignoring internal stops"""
         tasks = []
-        if require_start and (not protein or protein[0] != self.START_AA):
-            return tasks
-
         for aa in protein:
-            if aa == self.STOP_AA:
-                break
-            if aa in self.amino_task_map:
-                tasks.append(self.amino_task_map[aa])
-
+            if aa == "*" or aa not in self.amino_task_map:
+                continue
+            tasks.append(self.amino_task_map[aa])
         return tasks
 
-    def protein_fitness(self, protein: str, max_hours: float = 8.0, require_start: bool = True) -> float:
-        """
-        Compute normalized fitness [0.01,1.0] based on protein-derived tasks.
-        Includes soft penalties for edge cases.
-        """
-        tasks = self.protein_to_tasks(protein, require_start=require_start)
+    def protein_fitness(self, protein: str) -> float:
+        """Compute fitness combining efficiency, diversity, and time utilization"""
+        tasks = self.protein_to_tasks(protein)
+        if not tasks:
+            return 0.01
 
-        total_points = sum(t[1] for t in tasks)
-        total_time = sum(t[2] for t in tasks)
+        scheduled = []
+        total_points = 0.0
+        total_time = 0.0
+        last_task = None
+        unique_tasks = set()
+
+        # Sort tasks by points per minute for greedy efficiency
+        tasks_sorted = sorted(tasks, key=lambda t: t[1]/t[2], reverse=True)
+
+        for name, points, duration in tasks_sorted:
+            if total_time >= self.max_minutes:
+                break
+            if name == last_task:
+                continue  # skip back-to-back repeats
+            if total_time + duration > self.max_minutes:
+                continue
+            scheduled.append((name, points, duration))
+            total_points += points
+            total_time += duration
+            last_task = name
+            unique_tasks.add(name)
 
         if total_time == 0:
             return 0.01
 
-        fitness = total_points / total_time
+        # Efficiency = points per minute
+        efficiency = total_points / total_time
 
-        # Penalty: if execution time > max_hours, halve the score
-        if total_time > max_hours:
-            fitness *= 0.5
+        # Time utilization = reward schedules closer to 8 hours
+        time_utilization = total_time / self.max_minutes
 
-        # Penalty: very short proteins (<4 AAs worth of tasks)
-        if len(tasks) < 4:
-            fitness *= 0.8
+        # Diversity = fraction of unique tasks
+        diversity = len(unique_tasks) / len(scheduled) if scheduled else 1.0
 
-         # Penalty for repeated tasks
-        task_names = [t[0] for t in tasks]
-        counts = Counter(task_names)
-        repeats = sum(v - 1 for v in counts.values() if v > 1)
-        if repeats > 0:
-            fitness *= 0.9 ** repeats
-        # Penalty: multiple stop codons beyond the first
-        stop_count = protein.count(self.STOP_AA)
-        if stop_count > 1:
-            fitness *= 0.8 ** (stop_count - 1)
+        # Normalize by best single-task efficiency
+        best_efficiency = max(p / t for (_, p, t) in self.amino_task_map.values() if t > 0)
 
-        # Normalize fitness into [0.01, 1.0]
-        return min(max(fitness / 10.0, 0.01), 1.0)
+        # Combine all factors
+        normalized_score = (efficiency * diversity * time_utilization) / best_efficiency
+
+        return min(max(normalized_score, 0.01), 1.0)
+
+    def schedule_protein(self, protein: str) -> List[Tuple[str, float, float, float, float]]:
+        """
+        Return scheduled tasks with cumulative points and cumulative time
+        Each task is (name, points, duration, cum_points, cum_time)
+        """
+        tasks = self.protein_to_tasks(protein)
+        scheduled = []
+        total_time = 0.0
+        total_points = 0.0
+        last_task = None
+
+        # Sort by points per minute
+        tasks_sorted = sorted(tasks, key=lambda t: t[1]/t[2], reverse=True)
+
+        for name, points, duration in tasks_sorted:
+            if total_time >= self.max_minutes:
+                break
+            if name == last_task:
+                continue
+            if total_time + duration > self.max_minutes:
+                continue
+            total_time += duration
+            total_points += points
+            scheduled.append((name, points, duration, total_points, total_time))
+            last_task = name
+
+        return scheduled

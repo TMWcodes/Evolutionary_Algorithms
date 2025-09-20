@@ -17,11 +17,6 @@ class TestGenome:
         assert len(seq) == 15
         assert set(seq).issubset({'A','T','G','C'})
 
-    def test_generate_ssDNA_start_stop(self):
-        seq = self.g.generate_ssDNA(12, ensure_start_stop=True)
-        assert seq.startswith("ATG")
-        assert seq[-3:] in ["TAA","TAG","TGA"]
-
     # ------------------- Translation tests -------------------
     def test_dna_to_rna_translation(self):
         dna = "ATGTTT"

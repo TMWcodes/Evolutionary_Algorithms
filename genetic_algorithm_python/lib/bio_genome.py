@@ -2,8 +2,7 @@ import random
 import lib.genome_fitness as gf
 from typing import Tuple
 
-# from genetic_algorithm_python.lib.automation_fitness import AutomationFitness, AMINO_TASK_MAP
-# from bio_auto_fitness import AutomationFitness
+
 class Genome:
     def __init__(self):
         self.aminoacid_dict = {
@@ -20,20 +19,10 @@ class Genome:
 
     # ---------------- BIO FUNCTIONS ----------------
 
-    def generate_ssDNA(self, length, ensure_start_stop=True):
-        """Generate a random DNA sequence. Optionally enforce start/stop codons."""
-        if length < 6:  # too short to add both codons
-            return ''.join(random.choice("ATGC") for _ in range(length))
-
-        if ensure_start_stop:
-            middle_length = length - 6
-            middle_seq = ''.join(random.choice("ATGC") for _ in range(middle_length))
-            stop_codon = random.choice(["TAA", "TAG", "TGA"])
-            return "ATG" + middle_seq + stop_codon
-        else:
-            return ''.join(random.choice("ATGC") for _ in range(length))
-    def generate_rna(self, length):
-        return ''.join(random.choice("AUGC") for _ in range(length))
+    def generate_ssDNA(self, length):
+        """Generate random DNA with no enforced start/stop codons."""
+        bases = ['A', 'T', 'G', 'C']
+        return ''.join(random.choice(bases) for _ in range(length))
 
     def cDNA(self, dna):
         mapping = str.maketrans("ATGC", "TACG")
@@ -87,17 +76,7 @@ class Genome:
         frame_map = {1:0, 2:1, 3:2, -1:3, -2:4, -3:5}
         return [translations[frame_map[f]] for f in frames]
 
-    @staticmethod
-    def modular_crossover(dna1: str, dna2: str, module_size: int = 90) -> tuple[str, str]:
-        # Cut into modules
-        chunks1 = [dna1[i:i+module_size] for i in range(0, len(dna1), module_size)]
-        chunks2 = [dna2[i:i+module_size] for i in range(0, len(dna2), module_size)]
-        # Swap random modules
-        if chunks1 and chunks2:
-            i, j = random.randint(0, len(chunks1)-1), random.randint(0, len(chunks2)-1)
-            chunks1[i], chunks2[j] = chunks2[j], chunks1[i]
-        return ''.join(chunks1), ''.join(chunks2)
-
+  
     @staticmethod
     def gene_duplication(dna: str, min_len: int = 30, max_len: int = 200) -> str:
         if len(dna) < min_len:
@@ -166,22 +145,63 @@ class Genome:
             point = random.randrange(3, max_point-3, 3)
 
         return [c1[:point] + c2[point:], c2[:point] + c1[point:]]
+    @staticmethod
+    def modular_crossover(dna1: str, dna2: str, module_size: int = 90) -> tuple[str, str]:
+        # Cut into modules
+        chunks1 = [dna1[i:i+module_size] for i in range(0, len(dna1), module_size)]
+        chunks2 = [dna2[i:i+module_size] for i in range(0, len(dna2), module_size)]
+        # Swap random modules
+        if chunks1 and chunks2:
+            i, j = random.randint(0, len(chunks1)-1), random.randint(0, len(chunks2)-1)
+            chunks1[i], chunks2[j] = chunks2[j], chunks1[i]
+        return ''.join(chunks1), ''.join(chunks2)
 
+    @staticmethod
+    def recombination(dna1: str, dna2: str, num_points: int = 2) -> tuple[str, str]:
+        """Multi-point recombination between two DNA sequences."""
+        if len(dna1) < num_points+1 or len(dna2) < num_points+1:
+            return dna1, dna2
+
+        cut_points = sorted(random.sample(range(1, min(len(dna1), len(dna2))), num_points))
+        offspring1, offspring2 = "", ""
+        toggle = True
+        last = 0
+
+        for cut in cut_points + [min(len(dna1), len(dna2))]:
+            if toggle:
+                offspring1 += dna1[last:cut]
+                offspring2 += dna2[last:cut]
+            else:
+                offspring1 += dna2[last:cut]
+                offspring2 += dna1[last:cut]
+            toggle = not toggle
+            last = cut
+
+        return offspring1, offspring2
+    
+    @staticmethod
+    def transposition(dna: str, min_len: int = 10, max_len: int = 100) -> str:
+        """Randomly cut a segment and insert it elsewhere."""
+        if len(dna) < min_len:
+            return dna
+        start = random.randint(0, len(dna) - min_len)
+        length = random.randint(min_len, min(max_len, len(dna) - start))
+        segment = dna[start:start+length]
+        dna = dna[:start] + dna[start+length:]  # remove
+        insert_pos = random.randint(0, len(dna))
+        return dna[:insert_pos] + segment + dna[insert_pos:]
+    
+    @staticmethod
+    def local_duplication(dna: str, min_len: int = 5, max_len: int = 50) -> str:
+        """Duplicate a small segment in place."""
+        if len(dna) < min_len:
+            return dna
+        start = random.randint(0, len(dna) - min_len)
+        length = random.randint(min_len, min(max_len, len(dna) - start))
+        segment = dna[start:start+length]
+        return dna[:start+length] + segment + dna[start+length:]
 
     # ---------------- MODULAR EVOLUTION ----------------
-    def run_evolution(
-        self,
-        fitness_func,
-        length,
-        population_size=20,
-        p_c=0.7,
-        p_m=0.01,
-        iterations=100,
-        use_frames=False,
-        check_complement=False,
-        normalized=False,
-        verbose=True
-    ):
         """
         Run evolution on sequences of given length using a provided fitness function.
 
@@ -198,6 +218,23 @@ class Genome:
             verbose: print progress
         """
 
+    def run_evolution(
+        self,
+        fitness_func,
+        length,
+        population_size=20,
+        p_c=0.7,
+        p_m=0.002,
+        p_recomb=0.05,
+        p_transp=0.02,
+        p_locdup=0.02,
+        iterations=100,
+        use_frames=False,
+        check_complement=False,
+        normalized=False,
+        verbose=True
+):
+   
         # Generate initial random population of DNA sequences
         population = [self.generate_ssDNA(length) for _ in range(population_size)]
 
@@ -237,7 +274,7 @@ class Genome:
             # Verbose logging every 100 generations or last gen
             if verbose and (gen % 100 == 0 or gen == iterations - 1):
                 avg_fit = sum(x["fitness"] for x in scored) / len(scored)
-                print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}, Best Seq: {best_gen['dna']}")
+                print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}") #, Best Seq: {best_gen['dna']}
 
             # Early stop if normalized fitness reaches 1.0
             if normalized and best_gen["fitness"] >= 1.0:
@@ -279,24 +316,39 @@ class Genome:
                     offspring.extend(pair)
 
             # ----------------- GENE DUPLICATION / MODULAR ASSEMBLY -----------------
+            # ----------------- STRUCTURAL OPERATORS -----------------
             next_gen = []
             for dna in offspring:
-                # Small chance of duplicating a segment if sequence is long
+                # Gene duplication (existing)
                 if len(dna) > 60 and random.random() < 0.05:
                     dna = self.gene_duplication(dna)
+
+                # Local duplication
+                if random.random() < p_locdup:
+                    dna = self.local_duplication(dna)
+
+                # Transposition
+                if random.random() < p_transp:
+                    dna = self.transposition(dna)
+
                 next_gen.append(dna)
 
-            # Occasional modular crossover for longer sequences
+            # Recombination between two random sequences
+            if len(next_gen) > 1 and random.random() < p_recomb:
+                i, j = random.sample(range(len(next_gen)), 2)
+                child1, child2 = self.recombination(next_gen[i], next_gen[j])
+                next_gen[i], next_gen[j] = child1, child2
+
+            # Occasional modular crossover for longer sequences (existing)
             if len(next_gen) > 1 and max(len(d) for d in next_gen) > 90 and random.random() < 0.05:
                 i, j = random.sample(range(len(next_gen)), 2)
                 child1, child2 = self.modular_crossover(next_gen[i], next_gen[j])
                 next_gen[i], next_gen[j] = child1, child2
 
             # ----------------- MUTATION -----------------
-            # Apply codon-aware mutations to next generation
             population = [self.mutate(dna, p_m=p_m) for dna in next_gen]
 
         # Final report after all generations
         if verbose:
-            print(f"Best after {iterations} generations: {best_overall['dna']} (fitness={best_overall['fitness']:.3f})")
+            print(f"Best after {iterations} generations:(fitness={best_overall['fitness']:.3f})") # {best_overall['dna']}
         return best_overall
