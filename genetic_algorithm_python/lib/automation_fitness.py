@@ -1,4 +1,6 @@
 from typing import List, Dict, Tuple, Optional
+from collections import Counter
+import math
 
 # Default amino acid → task map
 AMINO_TASK_MAP = {
@@ -49,30 +51,39 @@ class AutomationFitness:
         return tasks
 
     def protein_fitness(self, protein: str) -> float:
-        """Compute fitness combining efficiency, diversity, and time utilization"""
+        """
+        Compute fitness for a protein sequence.
+        Encourages:
+        - High points/hour
+        - Diversity (no back-to-back repeats)
+        - Time utilization (close to 8 hrs)
+        Penalizes:
+        - Back-to-back repeats
+        - Overflow beyond 8 hours
+        """
         tasks = self.protein_to_tasks(protein)
         if not tasks:
             return 0.01
 
-        scheduled = []
         total_points = 0.0
         total_time = 0.0
         last_task = None
         unique_tasks = set()
 
-        # Sort tasks by points per minute for greedy efficiency
-        tasks_sorted = sorted(tasks, key=lambda t: t[1]/t[2], reverse=True)
-
-        for name, points, duration in tasks_sorted:
-            if total_time >= self.max_minutes:
+        for name, points, duration in tasks:
+            remaining_time = max(self.max_minutes - total_time, 0)
+            if remaining_time <= 0:
                 break
+
+            task_time = min(duration, remaining_time)
+            # Back-to-back penalty
             if name == last_task:
-                continue  # skip back-to-back repeats
-            if total_time + duration > self.max_minutes:
-                continue
-            scheduled.append((name, points, duration))
-            total_points += points
-            total_time += duration
+                task_points = points * 0.5 * (task_time / duration)
+            else:
+                task_points = points * (task_time / duration)
+
+            total_points += task_points
+            total_time += task_time
             last_task = name
             unique_tasks.add(name)
 
@@ -82,19 +93,21 @@ class AutomationFitness:
         # Efficiency = points per minute
         efficiency = total_points / total_time
 
-        # Time utilization = reward schedules closer to 8 hours
-        time_utilization = total_time / self.max_minutes
+        # Time utilization factor (bonus for filling close to max_minutes)
+        time_utilization = min(total_time / self.max_minutes, 1.0)
 
-        # Diversity = fraction of unique tasks
-        diversity = len(unique_tasks) / len(scheduled) if scheduled else 1.0
+        # Diversity factor: fraction of unique tasks
+        diversity = len(unique_tasks) / len(tasks) if tasks else 1.0
 
-        # Normalize by best single-task efficiency
+        # Raw score
+        raw_score = efficiency * time_utilization * diversity
+
+        # Normalize by best possible points/min task
         best_efficiency = max(p / t for (_, p, t) in self.amino_task_map.values() if t > 0)
+        normalized = raw_score / best_efficiency
 
-        # Combine all factors
-        normalized_score = (efficiency * diversity * time_utilization) / best_efficiency
+        return min(max(normalized, 0.01), 1.0)
 
-        return min(max(normalized_score, 0.01), 1.0)
 
     def schedule_protein(self, protein: str) -> List[Tuple[str, float, float, float, float]]:
         """

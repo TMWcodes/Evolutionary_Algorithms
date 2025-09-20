@@ -483,6 +483,192 @@ Final cumulative time (minutes): 480.0
 Automation fitness: 0.394
 ```
 
+Cycling top 6 tasks would have been 507 points
+
+### version 7
+
+adding run specs
+
+```
+Gen 0: Best 0.083, Avg 0.054
+Gen 100: Best 0.304, Avg 0.265
+Gen 200: Best 0.370, Avg 0.306
+Gen 300: Best 0.363, Avg 0.308
+Gen 400: Best 0.385, Avg 0.300
+Gen 499: Best 0.421, Avg 0.376
+
+--- GA Run Specs ---
+Population size: 20, Generations: 500
+p_c=0.7, p_m=0.002, p_recomb=0.05, p_transp=0.02, p_locdup=0.02
+use_frames=False, check_complement=False, normalized=False
+
+Best after 500 generations: fitness=0.451
+Translated protein: APHRSIV*QCYFEDPKTMSFMLF*GLND*RLTN
+Total amino acids in translated protein: 33
+
+Task Schedule:
+Idx  Task                      Pts   Time(min)  Cum.Time(min) Cum.Pts
+---------------------------------------------------------------------------
+1    Log Analysis              9     10.0       10.0         9.0
+2    User Report Gen           14    15.0       25.0         23.0
+3    API Health Check          8     10.0       35.0         31.0
+4    Report Generation         15    20.0       55.0         46.0
+5    Web Scraping              12    15.0       70.0         58.0
+6    Code Linting              4     10.0       80.0         62.0
+7    System Audit              16    20.0       100.0        78.0
+8    Quick Health Check        3     10.0       110.0        81.0
+9    Cache Clean               6     10.0       120.0        87.0
+10   Data Normalization        11    15.0       135.0        98.0
+11   Database Migration        25    20.0       155.0        123.0
+12   Email Summary             5     10.0       165.0        128.0
+13   Data Cleanup              10    15.0       180.0        138.0
+14   User Report Gen           14    15.0       195.0        152.0
+15   Email Parsing             6     10.0       205.0        158.0
+16   DB Sync                   20    25.0       230.0        178.0
+17   Model Training            30    25.0       255.0        208.0
+18   Web Scraping              12    15.0       270.0        220.0
+19   Database Migration        25    20.0       290.0        245.0
+20   Model Training            30    25.0       315.0        275.0
+21   Deploy Script             18    15.0       330.0        293.0
+22   Database Migration        25    20.0       350.0        318.0
+23   Data Aggregation          12    15.0       365.0        330.0
+24   Deploy Script             18    15.0       380.0        348.0
+25   Unit Test Run             10    15.0       395.0        358.0
+26   Data Cleanup              10    15.0       410.0        368.0
+27   Report Generation         15    20.0       430.0        383.0
+28   Deploy Script             18    15.0       445.0        401.0
+29   DB Sync                   20    25.0       470.0        421.0
+
+Total points: 421.0
+Final cumulative time (minutes): 470.0
+
+```
+
+### version 8
+
+```
+Gen 000: Gen Best 0.105, Running Best 0.105, Avg 0.054
+Gen 100: Gen Best 0.387, Running Best 0.417, Avg 0.335
+Gen 200: Gen Best 0.461, Running Best 0.481, Avg 0.386
+Gen 300: Gen Best 0.450, Running Best 0.483, Avg 0.345
+Gen 400: Gen Best 0.441, Running Best 0.483, Avg 0.355
+Gen 500: Gen Best 0.435, Running Best 0.483, Avg 0.356
+Gen 600: Gen Best 0.454, Running Best 0.483, Avg 0.335
+Gen 700: Gen Best 0.432, Running Best 0.483, Avg 0.344
+Gen 800: Gen Best 0.432, Running Best 0.483, Avg 0.345
+Gen 900: Gen Best 0.407, Running Best 0.483, Avg 0.328
+Gen 999: Gen Best 0.487, Running Best 0.507, Avg 0.384
+
+--- GA Run Specs ---
+Population size: 100, Generations: 1000
+p_c=0.7, p_m=0.002, p_recomb=0.05, p_transp=0.02, p_locdup=0.02
+use_frames=True, check_complement=True, normalized=True
+
+Best after 1000 generations: fitness=0.507
+Translated protein: VPSTMPKQCLREFTFYM*GMNIAMFS*D*WHL
+Total amino acids in translated protein: 32
+
+Task Schedule:
+Idx  Task                      Pts   Time(min)  Cum.Time(min) Cum.Pts
+---------------------------------------------------------------------------
+1    System Audit              16    20.0       20.0         16.0
+2    User Report Gen           14    15.0       35.0         30.0
+3    Web Scraping              12    15.0       50.0         42.0
+4    DB Sync                   20    25.0       75.0         62.0
+5    Model Training            30    25.0       100.0        92.0
+6    User Report Gen           14    15.0       115.0        106.0
+7    Email Parsing             6     10.0       125.0        112.0
+8    Quick Health Check        3     10.0       135.0        115.0
+9    Cache Clean               6     10.0       145.0        121.0
+10   Deploy Script             18    15.0       160.0        139.0
+11   Report Generation         15    20.0       180.0        154.0
+12   Email Summary             5     10.0       190.0        159.0
+13   Database Migration        25    20.0       210.0        184.0
+15   Database Migration        25    20.0       255.0        229.0
+16   Data Normalization        11    15.0       270.0        240.0
+17   Model Training            30    25.0       295.0        270.0
+18   Data Aggregation          12    15.0       310.0        282.0
+19   Model Training            30    25.0       335.0        312.0
+20   Unit Test Run             10    15.0       350.0        322.0
+21   Code Linting              4     10.0       360.0        326.0
+22   Log Analysis              9     10.0       370.0        335.0
+23   Model Training            30    25.0       395.0        365.0
+24   Database Migration        25    20.0       415.0        390.0
+25   Web Scraping              12    15.0       430.0        402.0
+26   Data Cleanup              10    15.0       445.0        412.0
+27   Backup Verification       9     15.0       460.0        421.0
+28   API Health Check          8     10.0       470.0        429.0
+
+Total points: 429.0
+Final cumulative time (hrs): 7.833333333333333
+
+
+====
+```
+
+### version 9
+
+with prints of duplicates and uniques
+
+```
+Gen 000: Gen Best 0.110, Running Best 0.110, Avg 0.053
+Gen 100: Gen Best 0.409, Running Best 0.456, Avg 0.328
+Gen 200: Gen Best 0.410, Running Best 0.460, Avg 0.320
+Gen 300: Gen Best 0.484, Running Best 0.484, Avg 0.336
+Gen 400: Gen Best 0.459, Running Best 0.489, Avg 0.353
+Gen 500: Gen Best 0.440, Running Best 0.501, Avg 0.344
+Gen 600: Gen Best 0.432, Running Best 0.501, Avg 0.333
+Gen 700: Gen Best 0.410, Running Best 0.501, Avg 0.336
+Gen 800: Gen Best 0.454, Running Best 0.501, Avg 0.373
+Gen 900: Gen Best 0.466, Running Best 0.501, Avg 0.357
+Gen 999: Gen Best 0.442, Running Best 0.501, Avg 0.359
+
+--- GA Run Specs ---
+Population size: 100, Generations: 1000
+p_c=0.7, p_m=0.002, p_recomb=0.05, p_transp=0.02, p_locdup=0.02
+use_frames=True, check_complement=True, normalized=False
+
+Best after 1000 generations: fitness=0.501
+Translated protein: MWHNGVMIMLLSYDQVA**PMFK*TFM*RET
+Total amino acids in translated protein: 31
+
+Task Schedule:
+Idx  Task                      Pts   Time(min)  Cum.Time(min) Cum.Pts
+---------------------------------------------------------------------------
+1    Model Training            30    25.0       25.0         30.0
+2    Backup Verification       9     15.0       40.0         39.0
+3    API Health Check          8     10.0       50.0         47.0
+4    Unit Test Run             10    15.0       65.0         57.0
+5    Data Aggregation          12    15.0       80.0         69.0
+6    System Audit              16    20.0       100.0        85.0
+7    Model Training            30    25.0       125.0        115.0
+8    Code Linting              4     10.0       135.0        119.0
+9    Model Training            30    25.0       160.0        149.0
+10   Deploy Script             18    15.0       175.0        167.0
+11   Deploy Script             18    15.0       190.0        185.0
+12   Web Scraping              12    15.0       205.0        197.0
+13   Data Normalization        11    15.0       220.0        208.0
+14   Data Cleanup              10    15.0       235.0        218.0
+15   Quick Health Check        3     10.0       245.0        221.0
+16   System Audit              16    20.0       265.0        237.0
+17   Log Analysis              9     10.0       275.0        246.0
+18   User Report Gen           14    15.0       290.0        260.0
+19   Model Training            30    25.0       315.0        290.0
+20   Database Migration        25    20.0       335.0        315.0
+21   Email Parsing             6     10.0       345.0        321.0
+22   DB Sync                   20    25.0       370.0        341.0
+23   Database Migration        25    20.0       390.0        366.0
+24   Model Training            30    25.0       415.0        396.0
+25   Report Generation         15    20.0       435.0        411.0
+26   Email Summary             5     10.0       445.0        416.0
+27   DB Sync                   20    25.0       470.0        436.0
+
+Total points: 436.0
+Final cumulative time (hrs): 7.833333333333333
+Number of unique tasks: 19
+Most duplicated task: 'Model Training' appears 5 times
+```
+
 # combined
 
 (run_bio_ga.py)

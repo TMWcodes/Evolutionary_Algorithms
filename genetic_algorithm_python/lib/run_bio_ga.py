@@ -3,6 +3,7 @@ import random
 from lib.bio_genome import Genome
 import lib.genome_fitness as gf
 from lib.automation_fitness import AutomationFitness  # your module
+from collections import Counter
 
 # Wrapper function to run the GA on a target DNA
 def run_bio_ga_evolution(target_dna, generations=2000, pop_size=100):
@@ -59,13 +60,21 @@ def run_bio_ga_evolution(target_dna, generations=2000, pop_size=100):
 
 
 
-def run_auto_ga_evolution(amino_task_map=None, generations=500, pop_size=20, verbose=True):
-    """
-    Runs a GA to evolve DNA sequences that maximize AutomationFitness.
-    Schedules tasks to fill up to 8 hours (480 min), avoiding back-to-back repeats.
-    """
-
-    genome = Genome()  # Handles DNA <-> RNA <-> protein translation
+def run_auto_ga_evolution(
+    amino_task_map=None,
+    generations=1000,
+    pop_size=100,
+    p_c=0.7,
+    p_m=0.002,
+    p_recomb=0.05,
+    p_transp=0.02,
+    p_locdup=0.02,
+    use_frames=True,
+    check_complement=True,
+    normalized=False,
+    verbose=True
+):
+    genome = Genome()
     auto_fitness = AutomationFitness(amino_task_map=amino_task_map)
 
     # ------------------------------
@@ -82,15 +91,14 @@ def run_auto_ga_evolution(amino_task_map=None, generations=500, pop_size=20, ver
         return auto_fitness.protein_fitness(protein_seq)
 
     # ------------------------------
-    # 3. Run GA
+    # 3. Run GA (Genome prints nothing)
     # ------------------------------
     result = genome.run_evolution(
         fitness_func=fitness_wrapper,
         length=9,
         population_size=pop_size,
         iterations=generations,
-        normalized=False,
-        verbose=verbose
+        normalized=normalized
     )
 
     # ------------------------------
@@ -100,49 +108,62 @@ def run_auto_ga_evolution(amino_task_map=None, generations=500, pop_size=20, ver
     protein_seq = genome.protein(rna_seq)
     tasks_list = auto_fitness.protein_to_tasks(protein_seq)
 
-    # ------------------------------
-    # 5. Filter tasks to 8-hour max and compute cumulative points
-    # ------------------------------
-    max_minutes = 480.0
+    # Filter tasks to 8 hours max
     cum_time = 0.0
-    cum_points = 0.0
     filtered_tasks = []
     for task, pts, duration in tasks_list:
-        if cum_time + duration > max_minutes:
+        if cum_time + duration > auto_fitness.max_minutes:
             break
         filtered_tasks.append((task, pts, duration))
         cum_time += duration
-        cum_points += pts  # cumulative points
 
     final_score = auto_fitness.protein_fitness(protein_seq)
 
     # ------------------------------
-    # 6. Print human-readable schedule
+    # 5. Print human-readable output
     # ------------------------------
     if verbose:
-        print("\n--- Automation GA Result ---")
+        print("\n--- GA Run Specs ---")
+        print(f"Population size: {pop_size}, Generations: {generations}")
+        print(f"p_c={p_c}, p_m={p_m}, p_recomb={p_recomb}, p_transp={p_transp}, p_locdup={p_locdup}")
+        print(f"use_frames={use_frames}, check_complement={check_complement}, normalized={normalized}")
+
+        print(f"\nBest after {generations} generations: fitness={final_score:.3f}")
         print(f"Translated protein: {protein_seq}")
-        total_aa = len(protein_seq.replace("*", ""))
-        print(f"\nTotal amino acids in translated protein: {total_aa}")
+        print(f"Total amino acids in translated protein: {len(protein_seq)}\n")
+
         if filtered_tasks:
-            print("\nTask Schedule:")
+            print("Task Schedule:")
             print(f"{'Idx':<4} {'Task':<25} {'Pts':<5} {'Time(min)':<10} {'Cum.Time(min)':<12} {'Cum.Pts':<8}")
             print("-" * 75)
-            cum_time_running = 0.0
-            cum_points_running = 0.0
+            cum = 0.0
+            cum_pts = 0.0
+            task_names = []  # List to store task names for counting
+
             for i, (task, pts, duration) in enumerate(filtered_tasks, start=1):
-                cum_time_running += duration
-                cum_points_running += pts
-                print(f"{i:<4} {task:<25} {pts:<5} {duration:<10.1f} {cum_time_running:<12.1f} {cum_points_running:<8.1f}")
-            print(f"\nTotal points: {cum_points_running}")
-            print(f"Final cumulative time (minutes): {cum_time_running}")
+                cum += duration
+                cum_pts += pts
+                task_names.append(task)
+                print(f"{i:<4} {task:<25} {pts:<5} {duration:<10.1f} {cum:<12.1f} {cum_pts:<8.1f}")
+
+            print(f"\nTotal points: {cum_pts}")
+            print(f"Final cumulative time (hrs): {cum/60}")
+             # Count unique and most duplicated tasks
+            task_counter = Counter(task_names)
+            num_unique_tasks = len(task_counter)
+            most_common_task, most_common_count = task_counter.most_common(1)[0]
+            
+            if task_counter:
+                most_common_task, most_common_count = task_counter.most_common(1)[0]
+                print(f"Number of unique tasks: {len(task_counter)}")
+                print(f"Most duplicated task: '{most_common_task}' appears {most_common_count} times")
+        
+
         else:
             print("Task list: (none)")
 
-        print(f"\nAutomation fitness: {final_score:.3f}")
-
     # ------------------------------
-    # 7. Return results
+    # 6. Return results for further processing
     # ------------------------------
     return {
         "protein_seq": protein_seq,

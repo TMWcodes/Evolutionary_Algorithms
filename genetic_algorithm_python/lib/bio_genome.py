@@ -202,21 +202,21 @@ class Genome:
         return dna[:start+length] + segment + dna[start+length:]
 
     # ---------------- MODULAR EVOLUTION ----------------
-        """
-        Run evolution on sequences of given length using a provided fitness function.
+    """
+    Run evolution on sequences of given length using a provided fitness function.
 
-        Args:
-            fitness_func: function(dna) -> float
-            length: length of DNA string
-            population_size: number of individuals in population
-            p_c: crossover probability
-            p_m: mutation probability
-            iterations: number of generations
-            use_frames: evaluate max fitness across 6 reading frames
-            check_complement: apply slight bonus/malus for complementary strand check
-            normalized: if True, early stop on perfect fitness
-            verbose: print progress
-        """
+    Args:
+        fitness_func: function(dna) -> float
+        length: length of DNA string
+        population_size: number of individuals in population
+        p_c: crossover probability
+        p_m: mutation probability
+        iterations: number of generations
+        use_frames: evaluate max fitness across 6 reading frames
+        check_complement: apply slight bonus/malus for complementary strand check
+        normalized: if True, early stop on perfect fitness
+        verbose: print progress
+    """
 
     def run_evolution(
         self,
@@ -274,7 +274,13 @@ class Genome:
             # Verbose logging every 100 generations or last gen
             if verbose and (gen % 100 == 0 or gen == iterations - 1):
                 avg_fit = sum(x["fitness"] for x in scored) / len(scored)
-                print(f"Gen {gen}: Best {best_gen['fitness']:.3f}, Avg {avg_fit:.3f}") #, Best Seq: {best_gen['dna']}
+                print(
+                    f"Gen {gen:03d}: "
+                    f"Gen Best {best_gen['fitness']:.3f}, "
+                    f"Running Best {best_overall['fitness']:.3f}, "
+                    f"Avg {avg_fit:.3f}"
+                )
+
 
             # Early stop if normalized fitness reaches 1.0
             if normalized and best_gen["fitness"] >= 1.0:
@@ -349,6 +355,4 @@ class Genome:
             population = [self.mutate(dna, p_m=p_m) for dna in next_gen]
 
         # Final report after all generations
-        if verbose:
-            print(f"Best after {iterations} generations:(fitness={best_overall['fitness']:.3f})") # {best_overall['dna']}
         return best_overall
