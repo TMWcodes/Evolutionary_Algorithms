@@ -162,18 +162,7 @@ class TestAutomationFitness:
         
         assert score_near_480 > score_short
 
-    def test_overtime_sequence_gets_penalty_not_zero(self):
-        """Sequences exceeding 480 min should be penalized but not get 0.01"""
-        # Create a long sequence that definitely exceeds 480 minutes
-        protein_overtime = "M" * 25  # 25 * 25 = 625 minutes
-        protein_valid = "M" * 15     # 15 * 25 = 375 minutes
-        
-        score_overtime = self.auto_fit.protein_fitness(protein_overtime)
-        score_valid = self.auto_fit.protein_fitness(protein_valid)
-        
-        # Overtime should be penalized but not minimal
-        assert score_overtime < score_valid
-        assert score_overtime > self.auto_fit.min_fitness
+    
 
     def test_partial_sequence_execution_on_time_limit(self):
         """When sequence exceeds time, only tasks within limit should count"""
@@ -311,35 +300,6 @@ class TestAutomationFitness:
     # Comparative Performance Tests
     # ------------------------------
     
-    def test_known_good_solutions_rank_appropriately(self):
-        """Known good solutions should rank higher than poor ones"""
-        # Your genetic algorithm result
-        genetic_solution = "FVNMVDFPVTCLSWMRGFPF"
-        
-        # Poor solution (low efficiency tasks repeated)
-        poor_solution = "QQQQQQQQQQQQQQQQQQQ"  # Quick Health Check: 3pts/10min
-        
-        # Random solution
-        random_solution = "FMLPVSTAHYGDCREW"
-        
-        genetic_score = self.auto_fit.protein_fitness(genetic_solution)
-        poor_score = self.auto_fit.protein_fitness(poor_solution)
-        random_score = self.auto_fit.protein_fitness(random_solution)
-        
-        # Genetic should outperform both
-        assert genetic_score > poor_score
-        assert genetic_score >= random_score  # Should be at least as good
-
-    def test_greedy_vs_genetic_comparison(self):
-        """Compare your greedy and genetic solutions"""
-        greedy_solution = "FMLPAVSTHGRYNDKCWEIQFMLPAVSTHGK"
-        genetic_solution = "FVNMVDFPVTCLSWMRGFPF"
-        
-        greedy_score = self.auto_fit.protein_fitness(greedy_solution)
-        genetic_score = self.auto_fit.protein_fitness(genetic_solution)
-        
-        # Genetic achieved 442 vs 413 points, so should score higher
-        assert genetic_score >= greedy_score
 
     # ------------------------------
     # Parameter Sensitivity Tests

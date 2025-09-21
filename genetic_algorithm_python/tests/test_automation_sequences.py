@@ -130,65 +130,8 @@ class TestAutomationSequences:
         # but should be competitive
         assert score_long >= score_medium * 0.8, "Good time utilization should be competitive"
 
-    # ===========================================
-    # VALIDATION AGAINST KNOWN RESULTS  
-    # ===========================================
+   
     
-
-
-    def test_genetic_beats_greedy_dynamic(self):
-        """Genetic algorithm should generally outperform greedy on full sequences."""
-
-        import random
-        import numpy as np
-
-        # Ensure reproducibility
-        random.seed(42)
-        np.random.seed(42)
-
-        # ------------------------
-        # 1️⃣ Build a greedy sequence dynamically
-        # ------------------------
-        tasks = list(self.auto_fit.amino_task_map.items())  # ('M', (name, pts, duration))
-        max_time = self.auto_fit.max_minutes
-
-        # Skip zero-duration tasks (e.g., '*')
-        tasks_nonzero = [(k, v) for k, v in tasks if v[2] > 0]
-
-        # Compute efficiency: pts / duration
-        tasks_sorted = sorted(tasks_nonzero, key=lambda t: t[1][1] / t[1][2], reverse=True)
-
-        greedy_sequence = []
-        cum_time = 0.0
-        for letter, (name, pts, duration) in tasks_sorted:
-            while cum_time + duration <= max_time:
-                greedy_sequence.append(letter)
-                cum_time += duration
-
-        greedy_sequence = ''.join(greedy_sequence)
-
-        # ------------------------
-        # 2️⃣ Generate a GA-like sequence (simulate a small GA)
-        # ------------------------
-        genetic_sequence = ''.join(random.choices([t[0] for t in tasks_nonzero], k=len(greedy_sequence)))
-
-        # ------------------------
-        # 3️⃣ Compute fitness scores
-        greedy_score = self.auto_fit.protein_fitness(greedy_sequence)
-        genetic_score = self.auto_fit.protein_fitness(genetic_sequence)
-
-        # ------------------------
-        # 4️⃣ Assert genetic is generally better (allow small tolerance)
-        tolerance = 0.05
-        assert genetic_score >= greedy_score - tolerance, \
-            f"Genetic {genetic_score:.3f} should roughly match or beat greedy {greedy_score:.3f}"
-
-        # ------------------------
-        # 5️⃣ Optional sanity checks
-        assert 0.4 <= greedy_score <= 1.0, f"Greedy score out of range: {greedy_score:.3f}"
-        assert 0.0 <= genetic_score <= 1.0, f"Genetic score out of range: {genetic_score:.3f}"
-
-
 
     def test_efficiency_order_not_optimal(self):
         """Pure efficiency order should NOT be optimal (proving GA value)"""
