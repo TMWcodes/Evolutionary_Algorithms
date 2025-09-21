@@ -40,6 +40,9 @@ class AutomationFitness:
                  max_minutes: float = 480.0):
         self.amino_task_map = amino_task_map or AMINO_TASK_MAP
         self.max_minutes = max_minutes
+        self.min_fitness = 0.01  # Minimum fitness score (1% of max)
+        self.max_fitness = 1.0   # Maximum possible fitness score
+
 
     def protein_to_tasks(self, protein: str) -> List[Tuple[str, float, float]]:
         """Translate protein sequence → list of tasks, ignoring internal stops"""
@@ -69,6 +72,7 @@ class AutomationFitness:
         total_time = 0.0
         last_task = None
         unique_tasks = set()
+        task_counts = {}
 
         for name, points, duration in tasks:
             remaining_time = max(self.max_minutes - total_time, 0)
@@ -77,10 +81,16 @@ class AutomationFitness:
 
             task_time = min(duration, remaining_time)
             # Back-to-back penalty
+         
+              # Add diminishing returns
+            task_counts[name] = task_counts.get(name, 0) + 1
+            count = task_counts[name]
+            diminishing_factor = 0.85 ** (count - 1)
+
             if name == last_task:
-                task_points = points * 0.5 * (task_time / duration)
+                task_points = points * diminishing_factor * 0.5 * (task_time / duration)
             else:
-                task_points = points * (task_time / duration)
+                task_points = points * diminishing_factor * (task_time / duration)
 
             total_points += task_points
             total_time += task_time
@@ -88,25 +98,40 @@ class AutomationFitness:
             unique_tasks.add(name)
 
         if total_time == 0:
-            return 0.01
+            return self.min_fitness
 
-        # Efficiency = points per minute
+        # Keep your efficiency calculation
         efficiency = total_points / total_time
 
-        # Time utilization factor (bonus for filling close to max_minutes)
+        # CHANGED: Less harsh time utilization (was killing scores)
         time_utilization = min(total_time / self.max_minutes, 1.0)
+        time_factor = 0.6 + 0.4 * time_utilization  # Range: 0.6 to 1.0 instead of 0 to 1.0
 
-        # Diversity factor: fraction of unique tasks
-        diversity = len(unique_tasks) / len(tasks) if tasks else 1.0
+        # CHANGED: Better diversity calculation
+        diversity = 0.7 + 0.3 * (len(unique_tasks) / 20)  # Range: 0.7 to 1.0
 
-        # Raw score
-        raw_score = efficiency * time_utilization * diversity
+        # Keep multiplicative but less harsh
+        raw_score = efficiency * time_factor * diversity
 
-        # Normalize by best possible points/min task
+         # ADD LENGTH PENALTY - penalize long sequences
+        protein_length = len(protein)
+        length_penalty = 0.0
+        if protein_length > 100:
+            # 0.1% penalty per amino acid over 100
+            # 447 amino acids would get ~3.5% penalty
+            length_penalty = (protein_length - 100) * 0.001
+
+        # Apply length penalty to raw score
+        constrained_score = raw_score * (1.0 - length_penalty)
+
+        # CHANGED: Normalize by smaller factor to get better score ranges
         best_efficiency = max(p / t for (_, p, t) in self.amino_task_map.values() if t > 0)
-        normalized = raw_score / best_efficiency
+        # Divide by best_efficiency * 0.7 to allow scores above theoretical efficiency
+        normalized = constrained_score / (best_efficiency * 0.7)
 
-        return min(max(normalized, 0.01), 1.0)
+
+        return min(max(normalized, self.min_fitness), 1.0)
+       
 
 
     def schedule_protein(self, protein: str) -> List[Tuple[str, float, float, float, float]]:
@@ -121,9 +146,9 @@ class AutomationFitness:
         last_task = None
 
         # Sort by points per minute
-        tasks_sorted = sorted(tasks, key=lambda t: t[1]/t[2], reverse=True)
+        # tasks_sorted = sorted(tasks, key=lambda t: t[1]/t[2], reverse=True)
 
-        for name, points, duration in tasks_sorted:
+        for name, points, duration in tasks:
             if total_time >= self.max_minutes:
                 break
             if name == last_task:

@@ -103,7 +103,7 @@ def print_task_schedule(filtered_tasks):
 
 def run_auto_ga_evolution(
     amino_task_map=None,
-    generations=1000,
+    generations=500,
     pop_size=100,
     p_c=0.7,
     p_m=0.002,
