@@ -6,13 +6,18 @@ def automation_fitness_wrapper(genome, auto_fitness):
         return auto_fitness.protein_fitness(protein_seq)
     return wrapper
 
-
-def dna_fitness_wrapper(target_dna, genome):
+def dna_fitness_wrapper(target_dna, genome, enforce_start_stop=True):
     """Return a GA-compatible fitness function for dna_fitness."""
     from lib import genome_fitness as gf
 
     def wrapper(dna):
-        dna_score, protein_score, combined = gf.dna_fitness(dna, target_dna, genome)
+        # Pass the toggle down to dna_fitness
+        dna_score, protein_score, combined = gf.dna_fitness(
+            candidate=dna,
+            target_dna=target_dna,
+            genome=genome,
+            enforce_start_stop=enforce_start_stop
+        )
 
         # Penalize excessively long sequences
         length_penalty = min(1.0, len(target_dna)/len(dna)) if len(dna) > len(target_dna) else 1.0

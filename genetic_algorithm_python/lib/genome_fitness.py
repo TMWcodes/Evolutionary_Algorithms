@@ -9,13 +9,20 @@ def phenotype_fitness(dna, target_protein, genome):
     return sum(a == b for a, b in zip(protein, target_protein)) / len(target_protein)
 
 
-# genome_fitness.py
-def dna_fitness(candidate, target_dna, genome, critical_sites=None, environment=None):
+def dna_fitness(
+    candidate, 
+    target_dna, 
+    genome, 
+    critical_sites=None, 
+    environment=None, 
+    enforce_start_stop=True
+):
     """
     Evaluate DNA with optional critical residues and environment-aware penalties.
     Returns tuple: (dna_score, protein_score, combined_fitness)
-    """
 
+    enforce_start_stop: if False, starting and stop codon penalties are skipped.
+    """
     if not target_dna:
         return (0.0, 0.0, 0.01)
 
@@ -39,9 +46,11 @@ def dna_fitness(candidate, target_dna, genome, critical_sites=None, environment=
 
     # --- penalties ---
     length_penalty = abs(len(candidate) - len(target_dna)) / len(target_dna)
-    start_penalty = 0 if candidate.startswith("ATG") else 0.1
+
+    # Combined start/stop codon penalty
+    start_penalty = 0 if not enforce_start_stop else (0 if candidate.startswith("ATG") else 0.1)
     stop_codons = {"TAA", "TAG", "TGA"}
-    stop_penalty = 0 if candidate[-3:] in stop_codons else 0.1
+    stop_penalty = 0 if not enforce_start_stop else (0 if candidate[-3:] in stop_codons else 0.1)
 
     combined = 0.5 * dna_score + 0.5 * protein_score
     combined -= (length_penalty + start_penalty + stop_penalty)
