@@ -37,7 +37,7 @@ class AutomationFitness:
     """
 
     def __init__(self, amino_task_map: Optional[Dict[str, Tuple[str, float, float]]] = None,
-                 max_minutes: float = 480.0):
+                 max_minutes: float = 240.0):
         self.amino_task_map = amino_task_map or AMINO_TASK_MAP
         self.max_minutes = max_minutes
         self.min_fitness = 0.01  # Minimum fitness score (1% of max)
