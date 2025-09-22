@@ -1,0 +1,26 @@
+./
+    binary_genome_build.md
+    bio_genome_build.md
+lib/
+    automation_fitness.py
+    binary_genome.py
+    bio_genome.py
+    compare_main.py
+    compare_results.py
+    fitness_wrappers.py
+    genome_fitness.py
+    hybrid_genome.py
+    knapsack.py
+    reporting.py
+    run_bio_ga.py
+    __init__.py
+tests/
+    test_automation_fitness.py
+    test_automation_fitness_integration.py
+    test_automation_sequences.py
+    test_bio_genome.py
+    test_genome_edge_cases.py
+    test_genome_fitness.py
+    test_genome_fitness_integration.py
+    test_knapsack.py
+    _init_.py

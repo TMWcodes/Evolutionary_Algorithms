@@ -24,11 +24,22 @@ AMINO_TASK_MAP = {
     "G": ("Data Aggregation", 12, 15),    
 }
 
+from lib import automation_fitness as af
+
 def greedy_knapsack(amino_task_map, capacity):
-    # Sort tasks by points/time
+    """
+    Deterministic greedy knapsack solver.
+    Selects tasks to maximize points within a time budget.
+
+    Returns:
+        schedule (list of tuples): (code, name, points, time)
+        total_points (int)
+        total_time (int)
+    """
+    # Sort tasks by points/time ratio
     tasks_sorted = sorted(
         [(k, v) for k, v in amino_task_map.items() if v[2] > 0],
-        key=lambda t: t[1][1]/t[1][2],
+        key=lambda t: t[1][1] / t[1][2],
         reverse=True
     )
 
@@ -36,7 +47,6 @@ def greedy_knapsack(amino_task_map, capacity):
     total_points = 0
     schedule = []
 
-    # Fill schedule greedily
     while True:
         added = False
         for code, (name, pts, t) in tasks_sorted:
@@ -46,24 +56,25 @@ def greedy_knapsack(amino_task_map, capacity):
                 total_points += pts
                 added = True
         if not added:
-            break  # Stop if no task fits
+            break  # stop if nothing fits
 
     return schedule, total_points, total_time
 
-schedule, points, time_used = greedy_knapsack(AMINO_TASK_MAP, 240)  # 4 hours
 
-# Create task string
-task_string = ''.join([s[0] for s in schedule])
+def run_greedy_knapsack(amino_task_map, capacity):
+    schedule, points, time_used = greedy_knapsack(amino_task_map, capacity)
+    task_string = ''.join([s[0] for s in schedule])
 
-# Print results
-print("Schedule:")
-for idx, (code, name, pts, t) in enumerate(schedule, start=1):
-    print(f"{idx:2d} | {name:20s} | {pts:3d} | {t:3d}")
+    from lib import automation_fitness as af
+    auto_fit = af.AutomationFitness(amino_task_map=amino_task_map)
+    fitness_score = auto_fit.protein_fitness(task_string)
 
-auto_fit = af.AutomationFitness(amino_task_map=AMINO_TASK_MAP)
-fitness_score = auto_fit.protein_fitness(task_string)
+    return {
+        "schedule": schedule,
+        "task_string": task_string,
+        "total_points": points,
+        "total_time": time_used,
+        "capacity": capacity,
+        "fitness_score": fitness_score,
+    }
 
-print("Greedy knapsack task string:", task_string)
-print("Total points:", points)
-print("Time used:", time_used)
-print("Fitness score through AutomationFitness:", fitness_score)

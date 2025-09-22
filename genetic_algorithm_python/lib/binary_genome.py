@@ -1,6 +1,6 @@
 import random
 
-class GeneticAlgorithm:
+class BinaryAlgorithm:
     def generate(self, length, population_size=10):
         return [''.join(random.choice('01') for _ in range(length)) for _ in range(population_size)]
 
@@ -46,40 +46,47 @@ class GeneticAlgorithm:
         return [c1[:index] + c2[index:], c2[:index] + c1[index:]]
 
     def run(self, length, p_c=0.7, p_m=0.01, iterations=100):
-        print("----STARTING POPULATION---")
         population = self.generate(length)
-
         ideal = '10101010'[:length]
+        logs = []
 
         def fitness(chrom):
             return sum(1 for a, b in zip(chrom, ideal) if a == b) / len(ideal)
+
+        best_overall = None
 
         for generation in range(iterations):
             fitness_data = self.map_population_fit(population, fitness)
             fitness_values = [d['fitness'] for d in fitness_data]
 
             selected = self.roulette_wheel_selection(population, fitness_values, len(population))
-
             pairs = [selected[i:i+2] for i in range(0, len(selected), 2)]
 
             new_population = []
             for pair in pairs:
                 if len(pair) == 2:
-                    new_population.extend(self.crossover(pair, index=4, p_c=p_c))
+                    new_population.extend(self.crossover(pair, p_c=p_c))
                 else:
-                    new_population.extend(pair)  # handle odd population
+                    new_population.extend(pair)
 
-            mutated_population = [self.mutate(ch, p_m=p_m) for ch in new_population]
-            population = mutated_population
+            population = [self.mutate(ch, p_m=p_m) for ch in new_population]
 
             best = max(self.map_population_fit(population, fitness), key=lambda x: x['fitness'])
+            if not best_overall or best['fitness'] > best_overall['fitness']:
+                best_overall = best
+
+            logs.append({
+                "generation": generation,
+                "gen_best": best['fitness'],
+                "running_best": best_overall['fitness'],
+                "avg": sum(fitness_values)/len(fitness_values)
+            })
 
             if best['chromosome'] == ideal:
-                print(f"Perfect match at generation {generation}: {best['chromosome']}")
-                return best['chromosome']
+                break
 
-        print(f"Best result after {iterations} iterations: {best['chromosome']} (Fitness: {best['fitness']})")
-        return best['chromosome']
-
-gene = GeneticAlgorithm()
-result = gene.run(length=8, p_c=0.8, p_m=0.02, iterations=200)
+        return {
+            "best": best_overall['chromosome'],
+            "fitness": best_overall['fitness'],
+            "logs": logs
+        }

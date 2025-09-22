@@ -232,74 +232,64 @@ class Genome:
         use_frames=False,
         check_complement=False,
         normalized=False,
-        verbose=True
+        verbose=False
 ):
-   
-        # Generate initial random population of DNA sequences
+
+    # Generate initial random population
         population = [self.generate_ssDNA(length) for _ in range(population_size)]
-
-        # Score initial population using fitness function
         scored = [{"dna": dna, "fitness": fitness_func(dna)} for dna in population]
-
-        # Keep track of overall best sequence so far
         best_overall = max(scored, key=lambda x: x["fitness"])
 
-        # Main GA loop over generations
-        for gen in range(iterations):
-            scored = []  # reset scores for this generation
+        # History tracking
+        history = []
 
-            # Evaluate each individual
+        for gen in range(iterations):
+            scored = []
+
+            # Evaluate population
             for dna in population:
                 score = fitness_func(dna)
-
-                # Optionally, evaluate all 6 reading frames and take max
                 if use_frames:
                     frames = self.translate_with_frame(dna)
-                    frame_score = max(fitness_func(f) for f in frames)
-                    score = max(score, frame_score)
-
-                # Optional bonus/malus for self-complementary DNA
+                    score = max(score, max(fitness_func(f) for f in frames))
                 if check_complement:
                     score *= 1.05 if self.check_DNA(dna, dna) else 0.95
-
                 scored.append({"dna": dna, "fitness": score})
 
-            # Identify best individual in current generation
+            # Best in generation
             best_gen = max(scored, key=lambda x: x["fitness"])
-
-            # Update overall best if current generation has improvement
-            if not best_overall or best_gen["fitness"] > best_overall["fitness"]:
+            if best_gen["fitness"] > best_overall["fitness"]:
                 best_overall = best_gen
 
-            # Verbose logging every 100 generations or last gen
-            if verbose and (gen % 100 == 0 or gen == iterations - 1):
-                avg_fit = sum(x["fitness"] for x in scored) / len(scored)
-                print(
-                    f"Gen {gen:03d}: "
-                    f"Gen Best {best_gen['fitness']:.3f}, "
-                    f"Running Best {best_overall['fitness']:.3f}, "
-                    f"Avg {avg_fit:.3f}"
-                )
+            # Track stats
+            avg_fit = sum(x["fitness"] for x in scored) / len(scored)
+            history.append({
+                "gen": gen,
+                "gen_best": best_gen["fitness"],
+                "running_best": best_overall["fitness"],
+                "avg": avg_fit
+            })
 
+            # Optional verbose print
+            
 
-            # Early stop if normalized fitness reaches 1.0
+            # Early stop
             if normalized and best_gen["fitness"] >= 1.0:
-                if verbose:
-                    print(f"Perfect match at generation {gen}: {best_gen['dna']}")
-                return best_gen
+                return {
+                    "dna": best_overall["dna"],     # keeps backward compatibility
+                    "fitness": best_overall["fitness"],
+                    "history": history
+                }
 
             # ----------------- SELECTION -----------------
-            # Compute selection probabilities proportional to fitness
             total_fit = sum(x["fitness"] for x in scored) or 1e-9
             probs = [x["fitness"] / total_fit for x in scored]
-
-            # Build cumulative distribution for roulette wheel selection
-            cumulative, cumsum = [], 0
+            cumulative = []
+            cumsum = 0
             for p in probs:
                 cumsum += p
                 cumulative.append(cumsum)
 
-            # Select new population based on probabilities
             selected = []
             for _ in range(population_size):
                 r = random.random()
@@ -307,12 +297,10 @@ class Genome:
                     if r <= prob:
                         selected.append(scored[i]["dna"])
                         break
-            # If selection fails, fallback to random sequences
             if not selected:
                 selected = [self.generate_ssDNA(length) for _ in range(population_size)]
 
-            # ----------------- CROSSOVER -----------------
-            # Pair up selected individuals and apply crossover
+            # ----------------- CROSSOVER & OPERATORS -----------------
             pairs = [selected[i:i+2] for i in range(0, len(selected), 2)]
             offspring = []
             for pair in pairs:
@@ -321,31 +309,21 @@ class Genome:
                 else:
                     offspring.extend(pair)
 
-            # ----------------- GENE DUPLICATION / MODULAR ASSEMBLY -----------------
-            # ----------------- STRUCTURAL OPERATORS -----------------
             next_gen = []
             for dna in offspring:
-                # Gene duplication (existing)
                 if len(dna) > 60 and random.random() < 0.05:
                     dna = self.gene_duplication(dna)
-
-                # Local duplication
                 if random.random() < p_locdup:
                     dna = self.local_duplication(dna)
-
-                # Transposition
                 if random.random() < p_transp:
                     dna = self.transposition(dna)
-
                 next_gen.append(dna)
 
-            # Recombination between two random sequences
             if len(next_gen) > 1 and random.random() < p_recomb:
                 i, j = random.sample(range(len(next_gen)), 2)
                 child1, child2 = self.recombination(next_gen[i], next_gen[j])
                 next_gen[i], next_gen[j] = child1, child2
 
-            # Occasional modular crossover for longer sequences (existing)
             if len(next_gen) > 1 and max(len(d) for d in next_gen) > 90 and random.random() < 0.05:
                 i, j = random.sample(range(len(next_gen)), 2)
                 child1, child2 = self.modular_crossover(next_gen[i], next_gen[j])
@@ -354,5 +332,10 @@ class Genome:
             # ----------------- MUTATION -----------------
             population = [self.mutate(dna, p_m=p_m) for dna in next_gen]
 
-        # Final report after all generations
-        return best_overall
+        # Return best individual + history
+        return {
+            "dna": best_overall["dna"],     # backward compatible
+            "fitness": best_overall["fitness"],
+            "history": history
+        }
+
