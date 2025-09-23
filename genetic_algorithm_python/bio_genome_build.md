@@ -57,6 +57,89 @@ Automated testing: DNA encodes test strategies, fitness = coverage or bug-findin
 
 The biological realism (codon-aware mutation, redundancy, frames) is not just metaphorical — it makes the GA more robust and better at exploring solution space without breaking structure, which can be valuable in automation contexts where invalid solutions would otherwise dominate.
 
+# Dependancies
+
+```
+automation_fitness.py:
+  ← collections
+  ← math
+  ← typing
+binary_genome.py:
+  ← random
+bio_genome.py:
+  ← lib.genome_fitness
+  ← random
+  ← typing
+compare_main.py:
+  ← lib.automation_fitness
+  ← lib.compare_results
+  ← lib.reporting
+  ← lib.run_bio_ga
+compare_results.py:
+  ← lib.automation_fitness
+  ← lib.binary_genome
+  ← lib.bio_genome
+  ← lib.hybrid_genome
+  ← lib.knapsack
+fitness_wrappers.py:
+  ← lib
+hybrid_genome.py:
+  ← lib.bio_genome
+  ← math
+  ← random
+knapsack.py:
+  ← lib
+  ← lib.automation_fitness
+reporting.py:
+  ← collections
+run_bio_ga.py:
+  ← collections
+  ← lib.automation_fitness
+  ← lib.bio_genome
+  ← lib.fitness_wrappers
+  ← lib.genome_fitness
+  ← lib.reporting
+  ← random
+Dependency graph saved to full_lib_graph.png
+```
+
+# Directory tree
+
+```
+ ./
+    binary_genome_build.md
+    bio_genome_build.md
+    combined_graph.png
+    compare_main_graph.png
+    full_lib_graph.png
+    structure.txt
+    synth_graph.png
+lib/
+    automation_fitness.py
+    binary_genome.py
+    bio_genome.py
+    compare_main.py
+    compare_results.py
+    fitness_wrappers.py
+    genome_fitness.py
+    hybrid_genome.py
+    knapsack.py
+    reporting.py
+    run_bio_ga.py
+    __init__.py
+tests/
+    test_automation_fitness.py
+    test_automation_fitness_integration.py
+    test_automation_sequences.py
+    test_bio_genome.py
+    test_genome_edge_cases.py
+    test_genome_fitness.py
+    test_genome_fitness_integration.py
+    test_hybrid_genome.py
+    test_knapsack.py
+    _init_.py
+```
+
 # Fitness modules
 
 ### Bio_fitness_functions

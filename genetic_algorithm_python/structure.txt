@@ -1,6 +1,11 @@
 ./
     binary_genome_build.md
     bio_genome_build.md
+    combined_graph.png
+    compare_main_graph.png
+    full_lib_graph.png
+    structure.txt
+    synth_graph.png
 lib/
     automation_fitness.py
     binary_genome.py
@@ -22,5 +27,6 @@ tests/
     test_genome_edge_cases.py
     test_genome_fitness.py
     test_genome_fitness_integration.py
+    test_hybrid_genome.py
     test_knapsack.py
     _init_.py

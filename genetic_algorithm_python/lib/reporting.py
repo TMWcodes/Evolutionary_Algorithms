@@ -1,15 +1,18 @@
 from collections import Counter
 
 def print_run_specs(pop_size, generations, p_c, p_m, p_recomb, p_transp, p_locdup,
-                    use_frames, check_complement, normalized, final_score, protein_seq):
+                    use_frames, check_complement, normalized, final_score, protein_seq,
+                    first_best_gen=None):
     print("\n--- GA Run Specs ---")
+    if first_best_gen is not None:
+        print(f"Best solution first found at generation: {first_best_gen}")
+    print(f"\nBest after {generations} generations: fitness={final_score:.3f}")
     print(f"Population size: {pop_size}, Generations: {generations}")
     print(f"p_c={p_c}, p_m={p_m}, p_recomb={p_recomb}, p_transp={p_transp}, p_locdup={p_locdup}")
     print(f"use_frames={use_frames}, check_complement={check_complement}, normalized={normalized}")
-    print(f"\nBest after {generations} generations: fitness={final_score:.3f}")
+    print("\n")
     print(f"Translated protein: {protein_seq}")
     print(f"Total amino acids in translated protein: {len(protein_seq)}\n")
-
 
 def print_task_schedule(filtered_tasks, max_minutes):
     """Pretty-print the task schedule with summary statistics."""
@@ -59,7 +62,7 @@ def print_schedule_result(result, label="Knapsack"):
     print(f"Time used: {result['total_time']} / {result['capacity']}")
     print(f"Fitness score: {result['fitness_score']:.3f}")
 
-def print_ga_results(results, label="GA Comparison"):
+def print_ga_compare_results(results, label="GA Comparison"):
     """
     Nicely print GA comparison results for Bio and Hybrid.
     Includes the generation where the best solution was first found.
@@ -89,8 +92,25 @@ def print_ga_results(results, label="GA Comparison"):
             print(f"{model.capitalize():<10}: {best} (Fitness: {fitness:.3f}, Found at Gen {sol_gen})")
 
 
+def print_bio_ga_result(result, target_protein, dna_fitness, protein_fitness, combined_fitness, genome, first_best_gen=None):
+    best_dna = result["dna"]
+    best_protein = genome.protein(genome.dna_to_rna(best_dna))
 
-def print_comparison(comparison):
+    print("\n--- BioGA Result ---")
+    if first_best_gen is not None:
+        print(f"Best solution first found at generation: {first_best_gen}")
+
+    print(f"Target Amino acid length: {len(target_protein)} amino acids")
+    print(f"Total amino acids in best protein: {len(best_protein)}")
+    print(f"\nTarget protein: {target_protein}")
+    print(f"Best protein:   {best_protein}\n")
+    print(f"DNA fitness:    {dna_fitness:.3f}")
+    print(f"Protein fitness:{protein_fitness:.3f}")
+    print(f"Combined fitness:{combined_fitness:.3f}")
+
+
+
+def print_knapsack_comparison(comparison):
     """Print a clean summary of Knapsack vs GA results."""
     print(f"Time capacity: {comparison['time_capacity']} min\n")
     for method in ["Knapsack", "GA"]:
@@ -104,7 +124,7 @@ def print_comparison(comparison):
 
 def print_ga_history(history, label="GA"):
     """
-    Print the evolution history for a GA run.
+    Print the evolution history for a GA run every 100 generations.
 
     Parameters:
         history: list of dicts, each with keys 'gen', 'gen_best', 'running_best', 'avg'
@@ -116,8 +136,12 @@ def print_ga_history(history, label="GA"):
 
     print(f"\n=== {label} Evolution History ===")
     for entry in history:
-        gen = entry["gen"]
+        gen = entry.get("generation", entry.get("gen", 0))
+        if gen % 100 != 0 and gen != history[-1].get("generation", history[-1].get("gen", 0)):
+            continue  # skip unless multiple of 100 or last generation
+
         gen_best = entry["gen_best"]
         running_best = entry["running_best"]
         avg = entry["avg"]
         print(f"Gen {gen:03d}: Gen Best {gen_best:.3f}, Running Best {running_best:.3f}, Avg {avg:.3f}")
+        
