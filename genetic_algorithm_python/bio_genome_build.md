@@ -57,6 +57,97 @@ Automated testing: DNA encodes test strategies, fitness = coverage or bug-findin
 
 The biological realism (codon-aware mutation, redundancy, frames) is not just metaphorical — it makes the GA more robust and better at exploring solution space without breaking structure, which can be valuable in automation contexts where invalid solutions would otherwise dominate.
 
+## operators
+
+```
+1. Mutation (mutate)
+
+What it does: Randomly changes bases in DNA codons. Mostly, it makes small “tweaks” to the sequence. Can also insert or delete a base if frameshift is allowed.
+
+Original codon: ATG → amino acid: Methionine (M)
+Mutation: ATG → ACG → Threonine (T)
+Only one codon changes at a time; sometimes it’s more than one codon.
+
+Impact on convergence:
+Low mutation: helps refine solutions without destroying them.
+High mutation: can destroy good sequences, slowing down discovery.
+Observation from your runs: Increasing p_m (mutation probability) delayed the first discovery without improving final fitness.
+
+2. Crossover (crossover)
+What it does: Mixes two parent DNA sequences to create new offspring. Codon-aligned to preserve protein structure.
+Example:
+Parent 1: ATGCGT...
+Parent 2: TACGGA...
+Split at codon 3 → child1: ATG + GGA..., child2: TAC + CGT...
+Impact on convergence:
+Very strong driver of convergence. Combines good parts from parents to form better solutions.
+Homology-aware crossover preserves common motifs, slightly reducing the chance of breaking functional segments.
+
+3. Recombination (recombination)
+
+What it does: Like crossover, but can have multiple “cut points,” shuffling segments more aggressively.
+Example:
+Parent 1: ATGCGTACG
+Parent 2: TACGGGCTA
+2-point recombination → child1: ATG...GGG..., child2: TAC...CGT...
+
+Impact on convergence:
+Helps explore larger sequence space. Moderate impact; too frequent recombination can disrupt partially optimized sequences.
+
+4. Transposition (transposition)
+What it does: Cuts a DNA segment and pastes it somewhere else.
+
+Example:
+Original: ATGCGTACG → cut CGT → insert at end → ATGACGCGT
+Impact:
+Introduces new arrangements. Can help escape local optima. Medium impact for convergence.
+
+5. Local Duplication (local_duplication)
+What it does: Duplicates a small segment in place.
+Example:
+Original: ATGCGTACG → duplicate CGT → ATGCGTCGTACG
+Impact:
+Minor effect; slightly increases diversity. Usually not a main driver of convergence.
+
+6. Gene Duplication (gene_duplication)
+What it does: Duplicates a longer segment and inserts it elsewhere.
+Example:
+Original: ATGCGTACG... → duplicate CGTACG → insert at position 2 → ATCGTACGGC...
+Impact:
+Can have large structural changes. Helps explore new sequences but may slow convergence if overused.
+
+7. Modular Crossover (modular_crossover)
+
+What it does: Exchanges large “modules” (chunks) between sequences.
+Example:
+Divide sequences into 90-base modules and swap one module with another sequence.
+Impact:
+Can drastically rearrange DNA. High potential to improve convergence if modules are meaningful, but risky with small populations.
+
+Summary Table (Plain English)
+Operator	What it does	Impact on convergence	Risk / Notes
+Mutation (mutate)	Tweaks codons randomly	Low–medium	Too high = destroys good solutions
+Crossover (crossover)	Mixes parents codon-by-codon	High	Most effective for convergence
+Recombination	Multi-point shuffling	Medium	Helps explore sequence space
+Transposition	Moves segments around	Medium	Good for escaping local optima
+Local duplication	Copies small segments locally	Low	Minor diversity boost
+Gene duplication	Copies larger segments	Medium	Can explore new structures
+Modular crossover	Swaps large modules	High	Powerful if modules are meaningful
+Prediction of most impact on convergence (other than population size):
+
+Crossover – combines good sequences efficiently.
+
+Modular crossover – big moves, potentially high payoff.
+
+Recombination & transposition – moderate exploration boost.
+
+Mutation – fine-tuning, but too high slows convergence.
+
+Local duplication – minor effect, mainly adds diversity.
+
+Gene duplication – medium, can help escape local optima.
+```
+
 # Dependancies
 
 ```
@@ -804,3 +895,5 @@ Translated RNA seq: AUGAUUGAAAAUCACUGGUGAAGUGCACACUCAACUGAGCUCUACGGCGG
 Translated protein: MIENHW\*SAHSTELYG
 Task list: [('Model Training', 30, 5.0), ('Code Linting', 4, 0.25), ('Email Summary', 5, 0.25), ('Unit Test Run', 10, 0.75), ('API Health Check', 8, 0.5), ('Backup Verification', 9, 0.5)]
 Automation fitness: 0.910
+
+---

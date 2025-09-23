@@ -92,22 +92,38 @@ def print_ga_compare_results(results, label="GA Comparison"):
             print(f"{model.capitalize():<10}: {best} (Fitness: {fitness:.3f}, Found at Gen {sol_gen})")
 
 
-def print_bio_ga_result(result, target_protein, dna_fitness, protein_fitness, combined_fitness, genome, first_best_gen=None):
+def print_bio_ga_result(result, target_protein, dna_fitness, protein_fitness, combined_fitness,
+                        genome, first_best_gen=None, pop_size=10, generations=100,
+                        p_c=0, p_m=0, p_recomb=0, p_transp=0, p_locdup=0,
+                        use_frames=True, check_complement=True, normalized=True):
+    """
+    Print a BioGA summary in the same format as AutoGA.
+    """
     best_dna = result["dna"]
     best_protein = genome.protein(genome.dna_to_rna(best_dna))
 
-    print("\n--- BioGA Result ---")
-    if first_best_gen is not None:
-        print(f"Best solution first found at generation: {first_best_gen}")
+    # Print using unified run specs function
+    print_run_specs(
+        pop_size=pop_size,
+        generations=generations,
+        p_c=p_c,
+        p_m=p_m,
+        p_recomb=p_recomb,
+        p_transp=p_transp,
+        p_locdup=p_locdup,
+        use_frames=use_frames,
+        check_complement=check_complement,
+        normalized=normalized,
+        final_score=combined_fitness,
+        protein_seq=best_protein,
+        first_best_gen=first_best_gen
+    )
 
+    # Additionally, print target-specific info
     print(f"Target Amino acid length: {len(target_protein)} amino acids")
-    print(f"Total amino acids in best protein: {len(best_protein)}")
-    print(f"\nTarget protein: {target_protein}")
-    print(f"Best protein:   {best_protein}\n")
+    print(f"Translated Amino acid length: {len(best_protein)} amino acids")
     print(f"DNA fitness:    {dna_fitness:.3f}")
-    print(f"Protein fitness:{protein_fitness:.3f}")
-    print(f"Combined fitness:{combined_fitness:.3f}")
-
+    print(f"Protein fitness:{protein_fitness:.3f}\n")
 
 
 def print_knapsack_comparison(comparison):

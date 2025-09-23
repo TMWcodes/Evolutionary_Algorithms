@@ -8,10 +8,24 @@ from lib.reporting import print_run_specs, print_task_schedule, print_ga_history
 from lib.fitness_wrappers import automation_fitness_wrapper, dna_fitness_wrapper
 
 
-def run_bio_ga_evolution(target_dna, generations=100, pop_size=10, enforce_start_stop=False):
+def run_bio_ga_evolution(
+    target_dna,
+    generations=100,
+    pop_size=10,
+    p_c=0.3,
+    p_m=0.02,
+    p_recomb=0.05,
+    p_transp=0.05,
+    p_locdup=0.02,
+    use_frames=True,
+    check_complement=True,
+    normalized=True,
+    enforce_start_stop=False
+):
     """
     Run GA on a target DNA sequence using dna_fitness with optional start codon enforcement.
     Outputs detailed GA run info using reporting functions.
+    Returns a dictionary containing full run specs and results.
     """
     genome = Genome()
     target_dna = target_dna.upper()
@@ -26,8 +40,8 @@ def run_bio_ga_evolution(target_dna, generations=100, pop_size=10, enforce_start
         length=len(target_dna),
         population_size=pop_size,
         iterations=generations,
-        normalized=True,
-        verbose=False  # suppress internal prints; reporting handles output
+        normalized=normalized,
+        verbose=False
     )
 
     # Compute detailed stats
@@ -58,23 +72,40 @@ def run_bio_ga_evolution(target_dna, generations=100, pop_size=10, enforce_start
 
     # Print summary using reporting function
     print_bio_ga_result(
-        result,
-        target_protein,
-        dna_score,
-        protein_score,
-        combined_score,
-        genome,
-        first_best_gen
+        result=result,
+        target_protein=target_protein,
+        dna_fitness=dna_score,
+        protein_fitness=protein_score,
+        combined_fitness=combined_score,
+        genome=genome,
+        first_best_gen=first_best_gen,
+        pop_size=pop_size,
+        generations=generations
+    
     )
+
+    # Return full specs dictionary
     return {
+        
+        "target_dna": target_dna,
+        "target_protein": target_protein,
         "dna": result["dna"],
         "protein_seq": genome.protein(genome.dna_to_rna(result["dna"])),
         "dna_fitness": dna_score,
         "protein_fitness": protein_score,
         "combined_fitness": combined_score,
-        "history": history,
         "first_best_gen": first_best_gen,
-        "target_protein": target_protein
+        "history": history,
+        "pop_size": pop_size,
+        "generations": generations,
+        "p_c": p_c,
+        "p_m": p_m,
+        "p_recomb": p_recomb,
+        "p_transp": p_transp,
+        "p_locdup": p_locdup,
+        "use_frames": use_frames,
+        "check_complement": check_complement,
+        "normalized": normalized
     }
 
 
@@ -134,6 +165,7 @@ def run_auto_ga_evolution(
         "fitness_score": final_score,
         "history": result.get("history", [])
     }
+
 if __name__ == "__main__":
     # run_auto_ga_evolution()
     target = "atgacatgttatagtcctattcctgcttgctttagtaaatcacaatatgctaagacaggaaagaaaaatatacatcttgttttgcatgaaaattatgacgaacataataaagttattaaagatgagaaatggagattgaatgagtgttcttttcctcatgctttgtatgaatatatctttttaccatgtagaaagtgtgtaggatgtcgttcagataacgctaaaatgtggtctcttcgtgcatataatgagatgaaattacataaaaagaattgttttataactttgacttatgataatgcttcagatttggtcgtaaaagaccctctatgtattgctagtttaagatataaacattttcaaaattttatgaaaagattacgtaagaaaactggtaaaaaattaggttatcttgtatgtggtgagtatggtttaaaagatggtagagctcattggcatgcaatattatttgattttgattttgaagataaggagttaatctatgttaaaaaaggatataaacactattattcaacactacttcaagagtgttggtcgacgtatgacaaaaaaacagactcgtataatccgattggttttattgaccttgctgattgcgattatgactgttgtagttatgtttctcagtatgtgcttaaaaaattacctgttaatcagaatggcattgctgttggttcctatgttgatgatgtaactggtgaagttaaagatattgagttaactgatgtatgtccacctatggttaggagttctaaaaatcctgctataggttataattggtataagaaatttggagagaatgcatgtgaaaaaggttttatccctattgttacgaatgaaggtaagaaggttcgtaaagttcgtacgcctgcttattactattctaaatttgaagtagataatcctcaaaaatttgaaatattaaaaaatgttaaggaagaaaaaatgagaaaatattacaaggaaaatccaatagatttagataaattgaattcttggagtgaagctcatttatatagaattaaaaaacggatgaaagaggtattgacacattttaaaaaatagtttatat"

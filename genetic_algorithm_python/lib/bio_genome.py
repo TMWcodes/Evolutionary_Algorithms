@@ -124,27 +124,37 @@ class Genome:
         if len(pair) != 2:
             return pair
         c1, c2 = pair
+
+        # Skip crossover with probability 1-p_c
         if random.random() > p_c:
             return [c1, c2]
 
         max_point = min(len(c1), len(c2))
-        if max_point < 6:
+        if max_point < 6:  # too short to perform codon-aligned crossover
             return [c1, c2]
 
-        # Homology-aware: find a common motif to preserve
+        min_point = 3
+        max_rand = max_point - 3
         if homology_preserve:
-            motif_len = 3
-            for i in range(len(c1)-motif_len+1):
-                motif = c1[i:i+motif_len]
+            # Try to find a common motif to preserve
+            for i in range(len(c1) - 2):
+                motif = c1[i:i+3]
                 if motif in c2:
-                    point = i + motif_len
+                    point = i + 3
                     break
             else:
-                point = random.randrange(3, max_point-3, 3)
+                # fallback if no motif found
+                if min_point >= max_rand:
+                    return [c1, c2]
+                point = random.randrange(min_point, max_rand, 3)
         else:
-            point = random.randrange(3, max_point-3, 3)
+            if min_point >= max_rand:
+                return [c1, c2]
+            point = random.randrange(min_point, max_rand, 3)
 
+        # Perform codon-aligned crossover
         return [c1[:point] + c2[point:], c2[:point] + c1[point:]]
+    
     @staticmethod
     def modular_crossover(dna1: str, dna2: str, module_size: int = 90) -> tuple[str, str]:
         # Cut into modules
