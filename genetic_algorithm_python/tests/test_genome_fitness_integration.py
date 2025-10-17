@@ -2,7 +2,7 @@
 import pytest
 from lib.bio_genome import Genome
 from lib.genome_fitness import dna_fitness
-
+from lib.fitness_wrappers import dna_only_wrapper
 class TestGenomeIntegration:
     """Integration tests for the full GA pipeline."""
 
@@ -89,3 +89,36 @@ class TestGenomeIntegration:
             verbose=False
         )
         assert best['dna'][-3:] in {"TAA", "TAG", "TGA"}
+
+    def test_run_evolution_records_best_string():
+        target_dna = "ATGCGTACGTTAGC"  # short target for testing
+        genome = Genome()
+        
+        # Create DNA-only fitness function
+        fitness_func = dna_only_wrapper(target_dna=target_dna, genome=genome, enforce_start_stop=False)
+        
+        # Run a small GA
+        result = genome.run_evolution(
+            fitness_func=fitness_func,
+            length=len(target_dna),
+            population_size=5,
+            iterations=5,
+            normalized=False,
+            verbose=False
+        )
+        
+        history = result.get("history", [])
+        
+        # Check that history is recorded
+        assert history, "GA history should not be empty"
+        
+        # Each entry should have 'best_string' and it should be non-empty
+        for entry in history:
+            assert "best_string" in entry, "History entry should have 'best_string'"
+            # Only check if gen_best > 0 to avoid false fails for initial random zero matches
+            if entry.get("gen_best", 0) > 0:
+                assert entry["best_string"], "best_string should be non-empty when gen_best > 0"
+        
+        # Final best_string should also exist and be non-empty if fitness > 0
+        final_best_string = history[-1]["best_string"]
+        assert final_best_string, "Final best_string should not be empty"

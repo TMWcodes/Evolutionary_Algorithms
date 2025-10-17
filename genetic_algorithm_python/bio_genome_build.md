@@ -59,6 +59,16 @@ The biological realism (codon-aware mutation, redundancy, frames) is not just me
 
 ## operators
 
+Crossover (p_c) → 0.6 – 0.9
+
+Mutation (p_m) → 0.001 – 0.05 (depends on DNA length, lower for longer sequences)
+
+Recombination (p_recomb) → 0.05 – 0.2 (if used as chunk swapping)
+
+Transposition (p_transp) → 0.01 – 0.1
+
+Local duplication (p_locdup) → 0.01 – 0.1
+
 ```
 1. Mutation (mutate)
 

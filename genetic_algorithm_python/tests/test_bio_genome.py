@@ -149,3 +149,5 @@ class TestGenome:
         population_sequences = [self.g.generate_ssDNA(length) for _ in range(2)]
         child1, child2 = self.g.modular_crossover(population_sequences[0], population_sequences[1], module_size=3)
         assert len(child1) == length and len(child2) == length or len(child1) > length or len(child2) > length
+
+    

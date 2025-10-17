@@ -5,6 +5,7 @@ from typing import Tuple
 
 class Genome:
     def __init__(self):
+        # Codon to amino acid mapping (U = RNA)
         self.aminoacid_dict = {
             'UUC':'F','UUU':'F','UUA':'L','UUG':'L','CUU':'L','CUC':'L','CUA':'L','CUG':'L',
             'AUU':'I','AUC':'I','AUA':'I','AUG':'M','GUU':'V','GUC':'V','GUA':'V','GUG':'V',
@@ -22,20 +23,26 @@ class Genome:
     def generate_ssDNA(self, length):
         """Generate random DNA with no enforced start/stop codons."""
         bases = ['A', 'T', 'G', 'C']
-        return ''.join(random.choice(bases) for _ in range(length))
+        # Always return uppercase DNA
+        return ''.join(random.choice(bases) for _ in range(length)).upper()
 
     def cDNA(self, dna):
+        # Complement of DNA, uppercase for consistency
         mapping = str.maketrans("ATGC", "TACG")
         return dna.upper().translate(mapping)
 
     def dna_to_rna(self, dna):
-        return dna.replace("T", "U")
+        # Convert T -> U; force uppercase for consistency
+        return dna.upper().replace("T", "U")
 
     def protein(self, rna):
+        # Translate RNA into protein using codons
         codons = [rna[i:i+3] for i in range(0, len(rna)-2, 3)]
         return ''.join(self.aminoacid_dict.get(c, '') for c in codons)
 
     def check_DNA(self, seq1, seq2):
+        # Compare sequences with possible complement/reverse logic
+        seq1, seq2 = seq1.upper(), seq2.upper()  # ensure uppercase
         if len(seq1) >= len(seq2):
             strand2 = seq2[::-1]
             strand2_check = seq1.translate(str.maketrans("ACTG", "TGAC"))
@@ -46,13 +53,13 @@ class Genome:
             return strand1 in strand1_check
 
     def six_reading_frames(self, seq1, rseq2):
+        # Split sequences into codons for 6 frames (forward and reverse)
+        seq1, rseq2 = seq1.upper(), rseq2.upper()  # normalize
         output = []
-        # forward
         f1 = ' '.join([seq1[i:i+3] for i in range(0, len(seq1), 3)])
         f2 = ' '.join([seq1[i:i+3] for i in range(1, len(seq1)-2, 3)])
         f3 = ' '.join([seq1[i:i+3] for i in range(2, len(seq1)-2, 3)])
         output.append("\n".join([f1, f2, f3]))
-        # reverse
         r1 = ' '.join([rseq2[i:i+3] for i in range(0, len(rseq2), 3)])
         r2 = ' '.join([rseq2[i:i+3] for i in range(1, len(rseq2)-2, 3)])
         r3 = ' '.join([rseq2[i:i+3] for i in range(2, len(rseq2)-2, 3)])
@@ -60,25 +67,24 @@ class Genome:
         return output
 
     def translate_with_frame(self, dna, frames=[1,2,3,-1,-2,-3]):
+        # Translate DNA into protein for 6 frames
+        dna = dna.upper()  # normalize
         if not dna:
             return ["" for _ in frames]
-
         def to_rna(seq): return seq.replace('T', 'U')
         forward = [to_rna(dna[i:]) for i in range(3)]
         reverse = [to_rna(self.cDNA(dna[::-1])[i:]) for i in range(3)]
-
         translations = []
         for seq in forward + reverse:
             codons = [seq[i:i+3] for i in range(0, len(seq)-2, 3)]
             aa_seq = ''.join(self.aminoacid_dict.get(c, '') for c in codons)
             translations.append(aa_seq)
-
         frame_map = {1:0, 2:1, 3:2, -1:3, -2:4, -3:5}
         return [translations[frame_map[f]] for f in frames]
 
-  
     @staticmethod
     def gene_duplication(dna: str, min_len: int = 30, max_len: int = 200) -> str:
+        dna = dna.upper()  # normalize
         if len(dna) < min_len:
             return dna
         start = random.randint(0, len(dna) - min_len)
@@ -86,10 +92,12 @@ class Genome:
         segment = dna[start:start+length]
         insert_pos = random.randint(0, len(dna))
         return dna[:insert_pos] + segment + dna[insert_pos:]
+
     # ---------------- EVOLUTIONARY FUNCTIONS ----------------
     # bio_genome.py (partial)
     def mutate(self, dna, p_m=0.01, max_mut_per_codon=1, allow_frameshift=False):
-        """Codon-aware mutation with optional multiple changes per codon and frameshift."""
+        # DNA mutation, codon-aware
+        dna = dna.upper()  # normalize
         bases = "ATGC"
         transitions = {"A":"G","G":"A","C":"T","T":"C"}
         dna_list = list(dna)

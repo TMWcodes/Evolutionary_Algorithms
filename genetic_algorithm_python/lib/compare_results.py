@@ -1,9 +1,14 @@
 # compare_results.py
+# from lib.binary_genome import BinaryAlgorithm
 from lib.knapsack import greedy_knapsack
 from lib.automation_fitness import AutomationFitness
 from lib.hybrid_genome import HybridGenome
 from lib.bio_genome import Genome
-from lib.binary_genome import BinaryAlgorithm
+
+import random
+from lib.fitness_wrappers import dna_only_wrapper
+from lib.run_bio_ga import run_bio_ga_evolution
+from lib.weasel import weasel_run
 #####knapsack###
 def compare_knapsack_ga(amino_task_map, capacity, ga_result):
     """
@@ -57,11 +62,7 @@ def compare_knapsack_ga(amino_task_map, capacity, ga_result):
         }
     }
 
-
-
-
 ####GA#####
-
 
 def compare_models(fitness_func, target_length, iterations=200, population_size=30, verbose=False):
     """
@@ -109,18 +110,90 @@ def compare_models(fitness_func, target_length, iterations=200, population_size=
         "history": hyb_history
     }
 
-    # --- BinaryGA ---
-    # bin_ga = BinaryAlgorithm()
-    # bin_best = bin_ga.run(
-    #     length=target_length,
-    #     iterations=iterations,
-    #     p_c=0.7,
-    #     p_m=0.01
-    # )
-    # results['binary'] = {
-    #     "best": bin_best,
-    #     "fitness": fitness_func(bin_best),
-    #     "history": []  # BinaryAlgorithm run returns only the best sequence
-    # }
 
     return results
+
+####weasel##
+
+def compare_ga_vs_weasel(target_dna, generations=200, pop_size=100, mu=0.0128, offspring=100):
+    """
+    Run a GA using DNA-only fitness and a Weasel baseline for comparison.
+
+    Args:
+        target_dna (str): DNA target sequence.
+        generations (int): Number of generations for both GA and Weasel.
+        pop_size (int): Population size for GA.
+        mu (float): Mutation probability for Weasel.
+        offspring (int): Number of offspring per generation in Weasel.
+
+    Returns:
+        dict: {'ga_history': [...], 'weasel_history': [...]}
+    """
+    # Ensure uppercase DNA
+    target_dna = target_dna.upper()
+    genome = Genome()
+
+    # --- GA Run ---
+    fitness_func = dna_only_wrapper(target_dna, genome, enforce_start_stop=False)
+
+    ga_result = genome.run_evolution(
+        fitness_func=fitness_func,
+        length=len(target_dna),
+        population_size=pop_size,
+        iterations=generations,
+        normalized=True,
+        verbose=False
+    )
+
+    # --- Convert GA history to standard format ---
+    ga_history = []
+    running_best = -1.0
+    best_string = ""
+
+    for gen, pop in enumerate(ga_result.get("history", []), start=1):
+        if isinstance(pop, dict):
+            dna_seq = pop.get("best_string") or pop.get("dna") or ""
+            fitness_val = float(pop.get("gen_best", pop.get("fitness", fitness_func(dna_seq))))
+        elif isinstance(pop, str):
+            dna_seq = pop
+            fitness_val = fitness_func(dna_seq)
+        else:
+            dna_seq = ""
+            fitness_val = 0.0
+
+        dna_seq = dna_seq[:len(target_dna)]
+
+        if fitness_val > running_best:
+            running_best = fitness_val
+            best_string = dna_seq
+
+        ga_history.append({
+            "generation": gen,
+            "gen_best": fitness_val,
+            "running_best": running_best,
+            "avg": fitness_val,
+            "best_string": best_string,
+            "dna": dna_seq
+        })
+
+    # --- Override last generation's best_string with GA's actual best ---
+    best_dna = ga_result.get("dna")  # best_overall DNA
+    if ga_history and best_dna:
+        ga_history[-1]["best_string"] = best_dna
+
+    # --- Weasel Run ---
+    weasel_history = weasel_run(
+        target_dna=target_dna,
+        genome=genome,
+        L=len(target_dna),
+        mu=mu,
+        offspring=offspring,
+        max_gens=generations,
+        verbose=False
+    )
+
+    return {
+        "ga_history": ga_history,
+        "weasel_history": weasel_history
+    }
+
